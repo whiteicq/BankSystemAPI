@@ -21,7 +21,7 @@ public partial class BankAccount
 
     public long BankId { get; set; }
 
-    public long ClientId { get; set; }
+    public long? ClientId { get; set; }
 
     [MaxLength(20)]
     public BankAccountType Type { get; set; }
@@ -34,6 +34,8 @@ public partial class BankAccount
     public virtual Bank Bank { get; set; } = null!;
 
     public virtual Client Client { get; set; } = null!;
+    public virtual Credit? Credit { get; set; }
+    public virtual Deposit? Deposit { get; set; }
 
     public virtual ICollection<Transaction> TransactionReceivers { get; set; } = new List<Transaction>();
 

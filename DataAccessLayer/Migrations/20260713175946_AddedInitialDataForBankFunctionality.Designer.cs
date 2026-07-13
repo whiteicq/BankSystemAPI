@@ -4,6 +4,7 @@ using DataAccessLayer.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(BankDbContext))]
-    partial class BankDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260713175946_AddedInitialDataForBankFunctionality")]
+    partial class AddedInitialDataForBankFunctionality
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -234,9 +237,6 @@ namespace DataAccessLayer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long?>("BankAccountId")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("BankId")
                         .HasColumnType("bigint");
 
@@ -273,10 +273,6 @@ namespace DataAccessLayer.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BankAccountId")
-                        .IsUnique()
-                        .HasFilter("[BankAccountId] IS NOT NULL");
-
                     b.HasIndex("BankId");
 
                     b.HasIndex("ClientId");
@@ -294,9 +290,6 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("bigint");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long?>("BankAccountId")
-                        .HasColumnType("bigint");
 
                     b.Property<long>("BankId")
                         .HasColumnType("bigint");
@@ -330,10 +323,6 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BankAccountId")
-                        .IsUnique()
-                        .HasFilter("[BankAccountId] IS NOT NULL");
 
                     b.HasIndex("BankId");
 
@@ -563,11 +552,6 @@ namespace DataAccessLayer.Migrations
 
             modelBuilder.Entity("DataAccessLayer.Entities.Credit", b =>
                 {
-                    b.HasOne("DataAccessLayer.Entities.BankAccount", "BankAccount")
-                        .WithOne("Credit")
-                        .HasForeignKey("DataAccessLayer.Entities.Credit", "BankAccountId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("DataAccessLayer.Entities.Bank", "Bank")
                         .WithMany("Credits")
                         .HasForeignKey("BankId")
@@ -581,19 +565,12 @@ namespace DataAccessLayer.Migrations
                         .IsRequired();
 
                     b.Navigation("Bank");
-
-                    b.Navigation("BankAccount");
 
                     b.Navigation("Client");
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Deposit", b =>
                 {
-                    b.HasOne("DataAccessLayer.Entities.BankAccount", "BankAccount")
-                        .WithOne("Deposit")
-                        .HasForeignKey("DataAccessLayer.Entities.Deposit", "BankAccountId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("DataAccessLayer.Entities.Bank", "Bank")
                         .WithMany("Deposits")
                         .HasForeignKey("BankId")
@@ -607,8 +584,6 @@ namespace DataAccessLayer.Migrations
                         .IsRequired();
 
                     b.Navigation("Bank");
-
-                    b.Navigation("BankAccount");
 
                     b.Navigation("Client");
                 });
@@ -673,10 +648,6 @@ namespace DataAccessLayer.Migrations
 
             modelBuilder.Entity("DataAccessLayer.Entities.BankAccount", b =>
                 {
-                    b.Navigation("Credit");
-
-                    b.Navigation("Deposit");
-
                     b.Navigation("TransactionReceivers");
 
                     b.Navigation("TransactionSenders");

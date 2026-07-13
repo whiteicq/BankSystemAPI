@@ -9,6 +9,6 @@ namespace BusinessLogicLayer.Interfaces
 {
     public interface ITransactionService
     {
-        void TransferMoney(decimal amount, long senderId, long recieverId, TransactionType type, CurrencyType currency);
+        void TransferMoney(decimal amount, long senderId, long recieverId, TransactionType type = TransactionType.PeerToPeer, CurrencyType currency = CurrencyType.BYN);
     }
 }

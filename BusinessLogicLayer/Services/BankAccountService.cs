@@ -35,9 +35,9 @@ namespace BusinessLogicLayer.Services
 
             bankAccountToClose.Status = BankAccountStatus.Closed;
             bankAccountToClose.ClosedAt = DateOnly.FromDateTime(DateTime.UtcNow);
-            _context.SaveChanges();
+            _context.SaveChanges(); 
         }
-
+        
         public void OpenBankAccount(long clientId, long bankId, BankAccountType bankAccountType = BankAccountType.Current)
         {
             Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFound($"{nameof(client)} is null");

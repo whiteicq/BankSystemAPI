@@ -6,5 +6,6 @@
         void TransferMoneyForLoan(long clientId, long creditId, long bankAccountId);
         // подписать на событие
         void LoanPayment(long creditId);
+        void ExecuteLoanMonthlyPayments();
     }
 }

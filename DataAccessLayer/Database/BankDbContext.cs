@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using DataAccessLayer.Enums.BankAccount;
 using DataAccessLayer.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
@@ -36,10 +35,70 @@ public class BankDbContext : DbContext
             bank.HasIndex(b => b.BIC, "UQ_banks_BIC").IsUnique();
             bank.HasIndex(b => b.Title, "UQ_banks_title").IsUnique();
             bank.Property(b => b.BIC).IsFixedLength();
+
+            bank.HasData(
+                new Bank
+                {
+                    Id = 1,
+                    Title = "Альфа-Банк",
+                    BIC = "ALFABY2X",
+                    Address = "г. Минск, ул. Сурганова, 43"
+                });
+            bank.HasData(
+                new Bank
+                {
+                    Id = 2,
+                    Title = "Приорбанк",
+                    BIC = "PJCBBY2X",
+                    Address = "г. Минск, ул. В.Хоружей 31А"
+                });
+            bank.HasData(
+                new Bank
+                {
+                    Id = 3,
+                    Title = "Беларусбанк",
+                    BIC = "AKBBBY2X",
+                    Address = "г. Минск, пр-к Дзержинского, 18"
+                });
         });
 
         modelBuilder.Entity<BankAccount>(bankAccount =>
         {
+            // мастер-счет банков
+            bankAccount.HasData(
+                new BankAccount
+                {
+                    Id = 1,
+                    MoneyBalance = 999_999_999_999m,
+                    BankAccountNumber = "0000000000000000000000000000",
+                    Type = BankAccountType.Current,
+                    Status = BankAccountStatus.Active,
+                    ClientId = null,
+                    BankId = 1
+                });
+            bankAccount.HasData(
+                new BankAccount
+                {
+                    Id = 2,
+                    MoneyBalance = 999_999_999_999m,
+                    BankAccountNumber = "1111111111111111111111111111",
+                    Type = BankAccountType.Current,
+                    Status = BankAccountStatus.Active,
+                    ClientId = null,
+                    BankId = 2
+                });
+            bankAccount.HasData(
+                new BankAccount
+                {
+                    Id = 3,
+                    MoneyBalance = 999_999_999_999m,
+                    BankAccountNumber = "2222222222222222222222222222",
+                    Type = BankAccountType.Current,
+                    Status = BankAccountStatus.Active,
+                    ClientId = null,
+                    BankId = 3
+                });
+
             bankAccount.HasIndex(ba => ba.BankAccountNumber, "UQ_bank_account_bank_account_number").IsUnique();
             bankAccount.Property(ba => ba.BankAccountNumber).IsFixedLength();
             bankAccount.Property(ba => ba.Currency).HasConversion<string>().IsFixedLength();
@@ -56,7 +115,7 @@ public class BankDbContext : DbContext
                 .HasOne(ba => ba.Client)
                 .WithMany(b => b.BankAccounts)
                 .HasForeignKey(ba => ba.ClientId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<Client>(client =>
@@ -85,6 +144,11 @@ public class BankDbContext : DbContext
             credit.HasOne(cr => cr.Client).WithMany(b => b.Credits)
                 .HasForeignKey(cr => cr.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            credit.HasOne(cr => cr.BankAccount)
+            .WithOne(ba => ba.Credit)
+            .HasForeignKey<Credit>(cr => cr.BankAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Deposit>(deposit =>
@@ -99,6 +163,11 @@ public class BankDbContext : DbContext
             deposit.HasOne(d => d.Client).WithMany(cl => cl.Deposits)
                 .HasForeignKey(d => d.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            deposit.HasOne(d => d.BankAccount)
+            .WithOne(ba => ba.Deposit)
+            .HasForeignKey<Deposit>(d => d.BankAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Employee>(employee =>

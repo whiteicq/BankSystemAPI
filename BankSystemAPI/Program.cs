@@ -1,5 +1,7 @@
+using BankSystemAPI.BackgroundWorkers;
 using DataAccessLayer.Database;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace BankSystemAPI
 {
@@ -22,6 +24,7 @@ namespace BankSystemAPI
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+            builder.Services.AddHostedService<CreditPaymentBackgroundWorker>();
 
             var app = builder.Build();
 

@@ -33,6 +33,9 @@ public partial class Credit
 
     public long BankId { get; set; }
 
+    public long? BankAccountId { get; set; }
+    public virtual BankAccount? BankAccount { get; set; } = null!;
+
     public virtual Bank Bank { get; set; } = null!;
 
     public virtual Client Client { get; set; } = null!;

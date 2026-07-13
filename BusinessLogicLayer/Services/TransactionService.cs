@@ -9,14 +9,14 @@ namespace BusinessLogicLayer.Services
 {
     public class TransactionService : ITransactionService
     {
-        private DbContext _context;
+        private readonly DbContext _context;
 
         public TransactionService(DbContext context)
         {
             _context = context;
         }
         // пока не понятно как приделать тип транзакции и валюту (на моменте списания/зачисления средств)
-        public void TransferMoney(decimal amount, long senderId, long recieverId, TransactionType type, CurrencyType currency)
+        public void TransferMoney(decimal amount, long senderId, long recieverId, TransactionType type = TransactionType.PeerToPeer, CurrencyType currency = CurrencyType.BYN)
         {
             BankAccount sender = _context.Set<BankAccount>().Find(senderId) ?? throw new KeyNotFoundException();
             BankAccount reciever = _context.Set<BankAccount>().Find(recieverId) ?? throw new KeyNotFoundException();
@@ -36,7 +36,8 @@ namespace BusinessLogicLayer.Services
                 throw new InvalidOperationException($"{nameof(reciever)} не доступен для использования");
             }
 
-            using (var _transaction = _context.Database.BeginTransaction())
+            bool isOuterTransaction = _context.Database.CurrentTransaction != null;
+            using (var _localTransaction = isOuterTransaction ? null : _context.Database.BeginTransaction())
             {
                 try
                 {
@@ -48,7 +49,6 @@ namespace BusinessLogicLayer.Services
                         TransactionAmount = amount,
                         Sender = sender,
                         Receiver = reciever,
-                        CreatedAt = DateOnly.FromDateTime(DateTime.UtcNow),
                         Type = type,
                         Currency = currency
                     };
@@ -56,11 +56,18 @@ namespace BusinessLogicLayer.Services
                     _context.Set<Transaction>().Add(transaction);
                     _context.SaveChanges();
 
-                    _transaction.Commit();
+                    if (!isOuterTransaction) 
+                    {
+                        _localTransaction?.Commit(); 
+                    }
                 }
                 catch
                 {
-                    _transaction.Rollback();
+                    if (!isOuterTransaction)
+                    {
+                        _localTransaction?.Rollback();
+                    }
+
                     throw;
                 }
             }
