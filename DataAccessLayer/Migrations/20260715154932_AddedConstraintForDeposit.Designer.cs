@@ -4,6 +4,7 @@ using DataAccessLayer.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(BankDbContext))]
-    partial class BankDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715154932_AddedConstraintForDeposit")]
+    partial class AddedConstraintForDeposit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -116,9 +119,7 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("decimal(18, 4)");
 
                     b.Property<DateOnly>("OpenedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("date")
-                        .HasDefaultValueSql("CAST(GETUTCDATE() AS DATE)");
+                        .HasColumnType("date");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -149,7 +150,7 @@ namespace DataAccessLayer.Migrations
                             BankId = 1L,
                             Currency = "BYN",
                             MoneyBalance = 999999999999m,
-                            OpenedAt = new DateOnly(2026, 7, 12),
+                            OpenedAt = new DateOnly(2026, 7, 15),
                             Status = "Active",
                             Type = "Current"
                         },
@@ -160,7 +161,7 @@ namespace DataAccessLayer.Migrations
                             BankId = 2L,
                             Currency = "BYN",
                             MoneyBalance = 999999999999m,
-                            OpenedAt = new DateOnly(2026, 7, 12),
+                            OpenedAt = new DateOnly(2026, 7, 15),
                             Status = "Active",
                             Type = "Current"
                         },
@@ -171,7 +172,7 @@ namespace DataAccessLayer.Migrations
                             BankId = 3L,
                             Currency = "BYN",
                             MoneyBalance = 999999999999m,
-                            OpenedAt = new DateOnly(2026, 7, 12),
+                            OpenedAt = new DateOnly(2026, 7, 15),
                             Status = "Active",
                             Type = "Current"
                         });
@@ -266,9 +267,7 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateOnly>("OpenedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("date")
-                        .HasDefaultValueSql("CAST(GETUTCDATE() AS DATE)");
+                        .HasColumnType("date");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -319,16 +318,14 @@ namespace DataAccessLayer.Migrations
                     b.Property<decimal>("DepositAmount")
                         .HasColumnType("decimal(18, 4)");
 
-                    b.Property<decimal>("DepositInterest")
-                        .HasColumnType("decimal(18, 4)");
+                    b.Property<float>("DepositInterest")
+                        .HasColumnType("real");
 
                     b.Property<int>("DepositTerm")
                         .HasColumnType("int");
 
                     b.Property<DateOnly>("OpenedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("date")
-                        .HasDefaultValueSql("CAST(GETUTCDATE() AS DATE)");
+                        .HasColumnType("date");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -507,9 +504,7 @@ namespace DataAccessLayer.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<DateOnly>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("date")
-                        .HasDefaultValueSql("CAST(GETUTCDATE() AS DATE)");
+                        .HasColumnType("date");
 
                     b.Property<string>("Currency")
                         .IsRequired()

@@ -20,7 +20,7 @@ public partial class Transaction
     [MaxLength(20)]
     public TransactionType Type { get; set; }
 
-    public DateOnly CreatedAt { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+    public DateOnly CreatedAt { get; set; }
 
     public long SenderId { get; set; }
 

@@ -3,7 +3,7 @@
     public enum TransactionType
     {
         Credit,
-        Deposite,
+        Deposit,
         PeerToPeer
     }
 }

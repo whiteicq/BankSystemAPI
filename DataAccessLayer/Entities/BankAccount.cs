@@ -15,7 +15,7 @@ public partial class BankAccount
     [MaxLength(28)]
     public string BankAccountNumber { get; set; } = null!;
 
-    public DateOnly OpenedAt { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+    public DateOnly OpenedAt { get; set; }
 
     public DateOnly? ClosedAt { get; set; }
 

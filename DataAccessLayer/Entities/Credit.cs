@@ -19,7 +19,7 @@ public partial class Credit
 
     public decimal LoanInterest { get; set; }
 
-    public DateOnly OpenedAt { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+    public DateOnly OpenedAt { get; set; }
 
     public DateOnly? ClosedAt { get; set; }
 

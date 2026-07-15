@@ -1,6 +1,7 @@
 ﻿using DataAccessLayer.Entities;
 using DataAccessLayer.Enums.Client;
 using DataAccessLayer.Enums.BankAccount;
+using DataAccessLayer.Enums.FinancialProduct.Deposit;
 using DataAccessLayer.Enums.FinancialProduct.Credit;
 
 namespace BusinessLogicLayer.Infrastructure
@@ -20,6 +21,11 @@ namespace BusinessLogicLayer.Infrastructure
         public static bool IsActive(Credit credit)
         {
             return credit.Status == CreditStatus.Active;
+        }
+
+        public static bool IsActive(Deposit deposit)
+        {
+            return deposit.Status == DepositStatus.Active;
         }
     }
 }

@@ -74,7 +74,8 @@ public class BankDbContext : DbContext
                     Type = BankAccountType.Current,
                     Status = BankAccountStatus.Active,
                     ClientId = null,
-                    BankId = 1
+                    BankId = 1,
+                    OpenedAt = new DateOnly(2026, 7, 12)
                 });
             bankAccount.HasData(
                 new BankAccount
@@ -85,7 +86,8 @@ public class BankDbContext : DbContext
                     Type = BankAccountType.Current,
                     Status = BankAccountStatus.Active,
                     ClientId = null,
-                    BankId = 2
+                    BankId = 2,
+                    OpenedAt = new DateOnly(2026, 7, 12)
                 });
             bankAccount.HasData(
                 new BankAccount
@@ -96,7 +98,8 @@ public class BankDbContext : DbContext
                     Type = BankAccountType.Current,
                     Status = BankAccountStatus.Active,
                     ClientId = null,
-                    BankId = 3
+                    BankId = 3,
+                    OpenedAt = new DateOnly(2026, 7, 12)
                 });
 
             bankAccount.HasIndex(ba => ba.BankAccountNumber, "UQ_bank_account_bank_account_number").IsUnique();
@@ -105,6 +108,8 @@ public class BankDbContext : DbContext
             bankAccount.Property(ba => ba.Status).HasConversion<string>();
             bankAccount.Property(ba => ba.Type).HasConversion<string>();
             bankAccount.Property(ba => ba.MoneyBalance).HasColumnType("decimal(18, 4)");
+            bankAccount.Property(ba => ba.OpenedAt).HasDefaultValueSql("CAST(GETUTCDATE() AS DATE)");
+
             bankAccount
                 .HasOne(ba => ba.Bank)
                 .WithMany(b => b.BankAccounts)
@@ -136,6 +141,7 @@ public class BankDbContext : DbContext
             credit.Property(cr => cr.LoanInterest).HasColumnType("decimal(18, 4)");
             credit.Property(cr => cr.Status).HasConversion<string>();
             credit.Property(cr => cr.Currency).HasConversion<string>();
+            credit.Property(cr => cr.OpenedAt).HasDefaultValueSql("CAST(GETUTCDATE() AS DATE)");
             credit.ToTable(cr => cr.HasCheckConstraint("CK_Credit_LoanInterest", "LoanInterest >= 14 AND LoanInterest <= 25"));
 
             credit.HasOne(cr => cr.Bank).WithMany(b => b.Credits)
@@ -154,8 +160,11 @@ public class BankDbContext : DbContext
         modelBuilder.Entity<Deposit>(deposit =>
         {
             deposit.Property(d => d.DepositAmount).HasColumnType("decimal(18, 4)");
+            deposit.Property(d => d.DepositInterest).HasColumnType("decimal(18, 4)");
             deposit.Property(d => d.Status).HasConversion<string>();
             deposit.Property(d => d.Currency).HasConversion<string>();
+            deposit.Property(d => d.OpenedAt).HasDefaultValueSql("CAST(GETUTCDATE() AS DATE)");
+            deposit.ToTable(d => d.HasCheckConstraint("CK_Deposit_DepositInterest", "DepositInterest > 5 AND DepositInterest <= 11"));
 
             deposit.HasOne(d => d.Bank).WithMany(p => p.Deposits)
                 .HasForeignKey(d => d.BankId);
@@ -208,6 +217,7 @@ public class BankDbContext : DbContext
             transaction.Property(tr => tr.TransactionAmount).HasColumnType("decimal(18, 4)");
             transaction.Property(tr => tr.Status).HasConversion<string>();
             transaction.Property(tr => tr.Type).HasConversion<string>();
+            transaction.Property(tr => tr.CreatedAt).HasDefaultValueSql("CAST(GETUTCDATE() AS DATE)");
 
             transaction.HasOne(tr => tr.Receiver).WithMany(ba => ba.TransactionReceivers)
                 .HasForeignKey(tr => tr.ReceiverId)

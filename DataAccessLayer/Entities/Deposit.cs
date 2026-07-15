@@ -12,7 +12,7 @@ public partial class Deposit
 
     public decimal DepositAmount { get; set; }
 
-    public float DepositInterest { get; set; }
+    public decimal DepositInterest { get; set; }
 
     public int DepositTerm { get; set; }
 

@@ -35,7 +35,7 @@ namespace BusinessLogicLayer.Services
                 throw new ArgumentOutOfRangeException();
             }
 
-            if (interest >= 14 && interest <= 25)
+            if (interest <= 14 || interest >= 25)
             {
                 throw new ArgumentOutOfRangeException();
             }
@@ -171,23 +171,27 @@ namespace BusinessLogicLayer.Services
                         decimal montlyPayment = CalculateMontlyPayment(credit.LoanAmount, credit.LoanTerm, credit.LoanInterest);
 
                         Client client = credit.Client;
-                        BankAccount? bankAccountForWriteOff = _context.Set<BankAccount>().FirstOrDefault(ba => ba.ClientId == client.Id 
+                        List<BankAccount> bankAccountsOfClientForWriteOff = _context.Set<BankAccount>().Where(ba => ba.ClientId == client.Id 
                         && ba.Type == BankAccountType.Current 
-                        && ba.Status == BankAccountStatus.Active);
+                        && ba.Status == BankAccountStatus.Active
+                        && ba.MoneyBalance >= montlyPayment).ToList();
 
-                        if (bankAccountForWriteOff is null || bankAccountForWriteOff.MoneyBalance < montlyPayment)
+                        if (bankAccountsOfClientForWriteOff is null)
                         {
                             credit.Status = CreditStatus.Expired;
-
                             _context.SaveChanges();
                             _transaction.Commit();
-                            continue;
+                            return;
                         }
 
-                        BankAccount creditBankAccount = _context.Set<BankAccount>().First(ba => ba.Id == credit.BankId);
-                        _transactionService.TransferMoney(montlyPayment, bankAccountForWriteOff.Id, creditBankAccount.Id, TransactionType.Credit);
-                        credit.LoanBalance -= montlyPayment;
+                        BankAccount currentBankAccount = bankAccountsOfClientForWriteOff.First();
+                        BankAccount masterBankAccount = GetMasterBankAccount(credit);
 
+                        _transactionService.TransferMoney(montlyPayment, currentBankAccount.Id, masterBankAccount.Id, TransactionType.Credit);
+
+                        BankAccount? creditBankAccount = _context.Set<BankAccount>().FirstOrDefault(ba => ba.Id == credit.BankId) ?? throw new KeyNotFoundException();
+                        credit.LoanBalance -= montlyPayment;
+                        creditBankAccount.MoneyBalance -= montlyPayment;
                         if (creditBankAccount.MoneyBalance >= 0 || credit.LoanBalance <= 0)
                         {
                             credit.Status = CreditStatus.Closed;
