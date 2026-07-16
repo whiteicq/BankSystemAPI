@@ -57,7 +57,7 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex(new[] { "Title" }, "UQ_banks_title")
                         .IsUnique();
 
-                    b.ToTable("Banks");
+                    b.ToTable("Banks", (string)null);
 
                     b.HasData(
                         new
@@ -139,7 +139,7 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex(new[] { "BankAccountNumber" }, "UQ_bank_account_bank_account_number")
                         .IsUnique();
 
-                    b.ToTable("BankAccounts");
+                    b.ToTable("BankAccounts", (string)null);
 
                     b.HasData(
                         new
@@ -225,7 +225,7 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex(new[] { "PhoneNumber" }, "UQ_clients_phone_number")
                         .IsUnique();
 
-                    b.ToTable("Clients");
+                    b.ToTable("Clients", (string)null);
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Credit", b =>
@@ -285,7 +285,7 @@ namespace DataAccessLayer.Migrations
 
                     b.HasIndex("ClientId");
 
-                    b.ToTable("Credits", t =>
+                    b.ToTable("Credits", null, t =>
                         {
                             t.HasCheckConstraint("CK_Credit_LoanInterest", "LoanInterest >= 14 AND LoanInterest <= 25");
                         });
@@ -345,7 +345,7 @@ namespace DataAccessLayer.Migrations
 
                     b.HasIndex("ClientId");
 
-                    b.ToTable("Deposits", t =>
+                    b.ToTable("Deposits", null, t =>
                         {
                             t.HasCheckConstraint("CK_Deposit_DepositInterest", "DepositInterest > 5 AND DepositInterest <= 11");
                         });
@@ -416,7 +416,7 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex(new[] { "PhoneNumber" }, "UQ_employee_phone_number")
                         .IsUnique();
 
-                    b.ToTable("Employees");
+                    b.ToTable("Employees", (string)null);
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Log", b =>
@@ -458,7 +458,7 @@ namespace DataAccessLayer.Migrations
 
                     b.HasIndex("EmployeeId");
 
-                    b.ToTable("Logs");
+                    b.ToTable("Logs", (string)null);
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Passport", b =>
@@ -495,7 +495,7 @@ namespace DataAccessLayer.Migrations
                     b.HasIndex(new[] { "Number" }, "UQ_passport_number")
                         .IsUnique();
 
-                    b.ToTable("Passports");
+                    b.ToTable("Passports", (string)null);
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.Transaction", b =>
@@ -542,7 +542,7 @@ namespace DataAccessLayer.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Transactions");
+                    b.ToTable("Transactions", (string)null);
                 });
 
             modelBuilder.Entity("DataAccessLayer.Entities.BankAccount", b =>

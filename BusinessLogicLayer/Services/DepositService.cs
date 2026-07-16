@@ -101,7 +101,6 @@ namespace BusinessLogicLayer.Services
             return depositBankAccount;
         }
 
-        // не доделано
         public void TransferMoneyForDeposit(long clientId, long depositId, long bankAccountSenderId)
         {
             Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFound("");
