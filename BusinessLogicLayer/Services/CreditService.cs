@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using DataAccessLayer.Enums.BankAccount;
 using BusinessLogicLayer.Infrastructure;
 using DataAccessLayer.Enums.Transaction;
+using DataAccessLayer.Enums.Common;
 
 namespace BusinessLogicLayer.Services
 {
@@ -169,7 +170,7 @@ namespace BusinessLogicLayer.Services
                     try
                     {
                         decimal montlyPayment = CalculateMontlyPayment(credit.LoanAmount, credit.LoanTerm, credit.LoanInterest);
-
+                        
                         Client client = credit.Client;
                         List<BankAccount> bankAccountsOfClientForWriteOff = _context.Set<BankAccount>().Where(ba => ba.ClientId == client.Id 
                         && ba.Type == BankAccountType.Current 
@@ -187,9 +188,9 @@ namespace BusinessLogicLayer.Services
                         BankAccount currentBankAccount = bankAccountsOfClientForWriteOff.First();
                         BankAccount masterBankAccount = GetMasterBankAccount(credit);
 
-                        _transactionService.TransferMoney(montlyPayment, currentBankAccount.Id, masterBankAccount.Id, TransactionType.Credit);
+                        _transactionService.TransferMoney(montlyPayment, currentBankAccount.Id, masterBankAccount.Id, TransactionType.Credit, credit.Currency);
 
-                        BankAccount? creditBankAccount = _context.Set<BankAccount>().FirstOrDefault(ba => ba.Id == credit.BankId) ?? throw new KeyNotFoundException();
+                        BankAccount? creditBankAccount = _context.Set<BankAccount>().FirstOrDefault(ba => ba.Id == credit.BankAccountId) ?? throw new KeyNotFoundException();
                         credit.LoanBalance -= montlyPayment;
                         creditBankAccount.MoneyBalance -= montlyPayment;
                         if (creditBankAccount.MoneyBalance >= 0 || credit.LoanBalance <= 0)

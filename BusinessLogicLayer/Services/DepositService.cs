@@ -21,11 +21,6 @@ namespace BusinessLogicLayer.Services
             _transactionService = transactionService;
         }
 
-        public void ExecuteDepositMonthlyPayments() 
-        {
-            throw new NotImplementedException();
-        }
-
         public void RequestDeposit(long clientId, decimal sumOfDeposit, int term, decimal interest)
         {
             if (sumOfDeposit <= 0)
@@ -62,9 +57,11 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges();
         }
 
-        private decimal CalculateMonthlyPayment(decimal sumOfDeposit, int term, decimal interest)
+        private decimal CalculateMonthlyPayment(decimal moneyBalance, decimal interest)
         {
-            return 0m;
+            decimal sum = moneyBalance * (interest / 12m / 100m);
+             
+            return sum;
         }
 
         private BankAccount GetMasterBankAccount(Deposit currentDeposit)
@@ -104,6 +101,7 @@ namespace BusinessLogicLayer.Services
             return depositBankAccount;
         }
 
+        // не доделано
         public void TransferMoneyForDeposit(long clientId, long depositId, long bankAccountSenderId)
         {
             Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFound("");
@@ -146,6 +144,47 @@ namespace BusinessLogicLayer.Services
                 {
                     _transaction.Rollback();
                     throw;
+                }
+            }
+        }
+
+        public void ExecuteDepositMonthlyPayments()
+        {
+            int todayDay = DateTime.Today.Day;
+
+            List<Deposit> activeDeposits = _context.Set<Deposit>().Include(d => d.Client).Include(d => d.BankAccount)
+                .Where(d => d.OpenedAt.Day == todayDay && d.Status == DepositStatus.Active)
+                .ToList();
+
+            
+            foreach (Deposit deposit in activeDeposits)
+            {
+                using (var _transaction = _context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        decimal monthlyAccrual = CalculateMonthlyPayment(deposit.BankAccount!.MoneyBalance, deposit.DepositInterest);
+                        BankAccount masterBankAccount = GetMasterBankAccount(deposit);
+                        
+                        _transactionService.TransferMoney(monthlyAccrual, masterBankAccount.Id, deposit.BankAccount.Id);
+                        if (DateTime.Today.Year == deposit.OpenedAt.Year)
+                        {
+                            deposit.Status = DepositStatus.Closed;
+                            BankAccount bankAccount = _context.Set<BankAccount>().First(ba => ba.ClientId == deposit.Client.Id && ba.Status == BankAccountStatus.Active && ba.Type == BankAccountType.Current);
+                            // если срок вклада закончился, перевод средств клиенту 
+                            _transactionService.TransferMoney(deposit.BankAccount.MoneyBalance, deposit.BankAccount.Id, bankAccount.Id);
+                            deposit.BankAccount.Status = BankAccountStatus.Closed;
+                            deposit.Status = DepositStatus.Closed;
+                        }
+
+                        _context.SaveChanges();
+                        _transaction.Commit();
+                    }
+                    catch
+                    {
+                        _transaction.Rollback();
+                        throw;
+                    }
                 }
             }
         }
