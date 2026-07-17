@@ -2,10 +2,12 @@
 using DataAccessLayer.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace DataAccessLayer.Database;
 
-public class BankDbContext : DbContext
+public class BankDbContext : IdentityDbContext<ApplicationUser, IdentityRole<long>, long>
 {
     public DbSet<Bank> Banks { get; set; }
 
@@ -29,6 +31,19 @@ public class BankDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<ApplicationUser>(user =>
+        {
+            user.HasOne(u => u.Client)
+                .WithOne() 
+                .HasForeignKey<ApplicationUser>(u => u.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            user.HasOne(u => u.Employee)
+                .WithOne() 
+                .HasForeignKey<ApplicationUser>(u => u.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<Bank>(bank =>
         {
             bank.HasIndex(b => b.Address, "UQ_banks_address").IsUnique();
