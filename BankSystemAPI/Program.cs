@@ -3,6 +3,9 @@ using DataAccessLayer.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using DataAccessLayer.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace BankSystemAPI
 {
@@ -12,7 +15,7 @@ namespace BankSystemAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
             builder.Services.AddDbContext<BankDbContext>(options =>
             {
                 options.UseSqlServer(connectionString);
@@ -40,11 +43,23 @@ namespace BankSystemAPI
                 .AddEntityFrameworkStores<BankDbContext>()
                 .AddDefaultTokenProviders();
 
-            builder.Services.ConfigureApplicationCookie(options =>
+            builder.Services.AddAuthentication(options =>
             {
-                options.LoginPath = "/Account/Login";
-                options.AccessDeniedPath = "/Account/AccessDenied";
-                options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                };
             });
 
             // 4. Политики авторизации
@@ -52,7 +67,7 @@ namespace BankSystemAPI
             {
                 options.AddPolicy("EmployeeOnly", policy => policy.RequireRole("Employee"));
                 options.AddPolicy("ClientOnly", policy => policy.RequireRole("Client"));
-                options.AddPolicy("CanManageOperations", policy => policy.RequireRole("Employee", "Admin"));
+                //options.AddPolicy("CanManageOperations", policy => policy.RequireRole("Employee", "Admin"));
             });
             // Add services to the container.
 

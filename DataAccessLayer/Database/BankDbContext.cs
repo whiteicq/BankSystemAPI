@@ -7,7 +7,16 @@ using Microsoft.AspNetCore.Identity;
 
 namespace DataAccessLayer.Database;
 
-public class BankDbContext : IdentityDbContext<ApplicationUser, IdentityRole<long>, long>
+public class BankDbContext : IdentityDbContext<ApplicationUser, 
+    IdentityRole<long>, 
+    long, 
+    IdentityUserClaim<long>,
+    IdentityUserRole<long>, 
+    IdentityUserLogin<long>,
+    IdentityRoleClaim<long>, 
+    IdentityUserToken<long>>
+
+
 {
     public DbSet<Bank> Banks { get; set; }
 
@@ -31,18 +40,7 @@ public class BankDbContext : IdentityDbContext<ApplicationUser, IdentityRole<lon
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<ApplicationUser>(user =>
-        {
-            user.HasOne(u => u.Client)
-                .WithOne() 
-                .HasForeignKey<ApplicationUser>(u => u.ClientId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            user.HasOne(u => u.Employee)
-                .WithOne() 
-                .HasForeignKey<ApplicationUser>(u => u.EmployeeId)
-                .OnDelete(DeleteBehavior.Restrict);
-        });
+        base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<Bank>(bank =>
         {
@@ -148,7 +146,13 @@ public class BankDbContext : IdentityDbContext<ApplicationUser, IdentityRole<lon
             .WithOne(p => p.Client)
             .HasForeignKey<Client>(cl => cl.PassportId)
             .OnDelete(DeleteBehavior.SetNull);
+
+            client.HasOne<ApplicationUser>()
+            .WithOne(u => u.Client)
+            .HasForeignKey<Client>(cl => cl.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
         });
+
         modelBuilder.Entity<Credit>(credit =>
         {
             credit.Property(cr => cr.LoanAmount).HasColumnType("decimal(18, 4)");
@@ -208,6 +212,11 @@ public class BankDbContext : IdentityDbContext<ApplicationUser, IdentityRole<lon
             employee.HasOne(emp => emp.Passport).WithOne(p => p.Employee)
                 .HasForeignKey<Employee>(emp => emp.PassportId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            employee.HasOne<ApplicationUser>()
+            .WithOne(u => u.Employee)
+            .HasForeignKey<Employee>(emp => emp.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Log>(log =>
@@ -215,6 +224,10 @@ public class BankDbContext : IdentityDbContext<ApplicationUser, IdentityRole<lon
             log.HasOne(l => l.Employee).WithMany(emp => emp.Logs)
                 .HasForeignKey(l => l.EmployeeId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            log.Property(l => l.TypeOperation).HasConversion<string>();
+
+            log.Property(l => l.CreatedAt).HasDefaultValueSql("CAST(GETUTCDATE() AS DATE)");
         });
 
         modelBuilder.Entity<Passport>(passport =>

@@ -39,4 +39,6 @@ public partial class Employee
     public virtual ICollection<Log> Logs { get; set; } = new List<Log>();
 
     public virtual Passport Passport { get; set; } = null!;
+
+    public long UserId { get; set; }
 }

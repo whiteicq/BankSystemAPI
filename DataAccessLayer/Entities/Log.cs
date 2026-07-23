@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using DataAccessLayer.Enums.Logs;
 using System.ComponentModel.DataAnnotations;
 
 namespace DataAccessLayer.Entities;
@@ -9,7 +8,7 @@ public partial class Log
     public long Id { get; set; }
 
     [MaxLength(20)]
-    public string TypeOperation { get; set; } = null!;
+    public OperationType TypeOperation { get; set; }
 
     [MaxLength(30)]
     public string TargetTable { get; set; } = null!;

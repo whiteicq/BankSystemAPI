@@ -34,4 +34,5 @@ public partial class Client
     public virtual ICollection<Credit> Credits { get; set; } = new List<Credit>();
 
     public virtual ICollection<Deposit> Deposits { get; set; } = new List<Deposit>();
+    public long UserId { get; set; }
 }
