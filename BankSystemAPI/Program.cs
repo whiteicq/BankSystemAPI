@@ -58,11 +58,11 @@ namespace BankSystemAPI
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
                 };
             });
 
-            // 4. Политики авторизации
+            // Политики авторизации
             builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy("EmployeeOnly", policy => policy.RequireRole("Employee"));

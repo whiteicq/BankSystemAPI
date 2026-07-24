@@ -13,10 +13,12 @@ namespace BusinessLogicLayer.Services
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ITokenService _tokenService;
 
-        public AuthService(DbContext context, UserManager<ApplicationUser> userManager)
+        public AuthService(DbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ITokenService tokenService)
         {
             _context = context;
             _userManager = userManager;
+            _tokenService = tokenService;
+            _signInManager = signInManager;
         }
 
         public async Task RegisterClientAsync(RegisterClientDto clientDto)
@@ -76,7 +78,48 @@ namespace BusinessLogicLayer.Services
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
         {
-            throw new NotImplementedException();
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user == null)
+            {
+                return new AuthResponseDto
+                {
+                    IsSuccess = false,
+                    Token = string.Empty,
+                    ErrorMessage = "Неверный логин или пароль"
+                };
+            }
+
+            var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
+
+            // если аккаунт уже временно заморожен
+            if (result.IsLockedOut)
+            {
+                return new AuthResponseDto
+                { 
+                    IsSuccess = false,
+                    Token = string.Empty, 
+                    ErrorMessage = "Аккаунт заблокирован из-за лимита неверных попыток"
+                };
+            }
+
+            if (!result.Succeeded)
+            {
+                return new AuthResponseDto
+                {
+                    IsSuccess = false, 
+                    Token = string.Empty,
+                    ErrorMessage = "Неверный логин или пароль"
+                };
+            }
+
+            var token = await _tokenService.GenerateJwtTokenAsync(user);
+
+            return new AuthResponseDto
+            {
+                IsSuccess = true, 
+                Token = token,
+                ErrorMessage = "Вход успешно выполнен"
+            };
         }
     }
 }
