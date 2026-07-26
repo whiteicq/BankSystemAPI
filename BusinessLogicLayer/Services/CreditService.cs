@@ -24,7 +24,7 @@ namespace BusinessLogicLayer.Services
         }
 
         // запрос клиента на кредит
-        public void RequestCredit(long clientId, decimal sumOfLoan, int term, decimal interest)
+        public Credit RequestCredit(long clientId, decimal sumOfLoan, int term, decimal interest)
         {
             if (sumOfLoan <= 0)
             {
@@ -63,6 +63,8 @@ namespace BusinessLogicLayer.Services
             _context.Set<Credit>().Add(credit);
 
             _context.SaveChanges();
+
+            return credit;
         }
 
         // открытие кредитного счета после одобрения

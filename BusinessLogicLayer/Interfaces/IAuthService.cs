@@ -4,7 +4,8 @@ namespace BusinessLogicLayer.Interfaces
 {
     public interface IAuthService
     {
-        Task RegisterClientAsync(RegisterClientDto clientDto);
-        Task<AuthResponseDto> LoginAsync(LoginDto dto);
+        Task RegisterClientAsync(string email, string password, string name, string? patronymic, string surname, string phoneNumber, DateOnly birthDate, string identificationNumber, string passportSeries, string passportNumber);
+        Task<string> LoginAsync(string email, string password);
+        Task Logout();
     }
 }

@@ -38,7 +38,7 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges(); 
         }
         
-        public void OpenBankAccount(long clientId, long bankId, BankAccountType bankAccountType = BankAccountType.Current)
+        public BankAccount OpenBankAccount(long clientId, long bankId, BankAccountType bankAccountType = BankAccountType.Current)
         {
             Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFound($"{nameof(client)} is null");
 
@@ -58,6 +58,8 @@ namespace BusinessLogicLayer.Services
             _context.Set<BankAccount>().Add(newBankAccount);
 
             _context.SaveChanges();
+
+            return newBankAccount;
         }
 
         public string GenerateUniqueBankAccountNumber(int length)

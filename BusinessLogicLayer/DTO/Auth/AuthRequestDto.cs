@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace BusinessLogicLayer.DTO
+namespace BusinessLogicLayer.DTO.Auth
 {
-    public class RegisterClientDto
+    public class AuthRequestDto
     {
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BusinessLogicLayer.DTO
+namespace BusinessLogicLayer.DTO.Auth
 {
     public class LoginDto
     {

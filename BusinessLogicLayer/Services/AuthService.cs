@@ -3,6 +3,7 @@ using BusinessLogicLayer.Interfaces;
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BusinessLogicLayer.Services
 {
@@ -21,7 +22,7 @@ namespace BusinessLogicLayer.Services
             _signInManager = signInManager;
         }
 
-        public async Task RegisterClientAsync(RegisterClientDto clientDto)
+        public async Task RegisterClientAsync(string email, string password, string name, string? patronymic, string surname, string phoneNumber, DateOnly birthDate, string identificationNumber, string passportSeries, string passportNumber)
         {
             using (var _transaction = await _context.Database.BeginTransactionAsync())
             {
@@ -29,12 +30,12 @@ namespace BusinessLogicLayer.Services
                 {
                     ApplicationUser user = new ApplicationUser
                     {
-                        UserName = $"{clientDto.Surname} {clientDto.Name} {clientDto.Patronymic}",
-                        PhoneNumber = clientDto.PhoneNumber,
-                        Email = clientDto.Email
+                        UserName = $"{surname} {name} {patronymic}".Trim(),
+                        PhoneNumber = phoneNumber,
+                        Email = email
                     };
 
-                    var identityResult = await _userManager.CreateAsync(user, clientDto.Password);
+                    var identityResult = await _userManager.CreateAsync(user, password);
                     if (!identityResult.Succeeded)
                     {
                         throw new Exception();
@@ -44,9 +45,9 @@ namespace BusinessLogicLayer.Services
 
                     Passport passport = new Passport
                     {
-                        IdentificationNumber = clientDto.Passport.IdentificationNumber,
-                        Series = clientDto.Passport.Series,
-                        Number = clientDto.Passport.Number
+                        IdentificationNumber = identificationNumber,
+                        Series = passportSeries,
+                        Number = passportNumber
                     };
 
                     _context.Set<Passport>().Add(passport);
@@ -54,13 +55,13 @@ namespace BusinessLogicLayer.Services
 
                     var clientProfile = new Client
                     {
-                        UserId = user.Id,          
-                        PassportId = passport.Id,  
-                        Name = clientDto.Name,
-                        Surname = clientDto.Surname,
-                        Patronymic = clientDto.Patronymic,
-                        PhoneNumber = clientDto.PhoneNumber,
-                        BirthDate = clientDto.BirthDate,
+                        UserId = user.Id,
+                        PassportId = passport.Id,
+                        Name = name,
+                        Surname = surname,
+                        Patronymic = patronymic,
+                        PhoneNumber = phoneNumber,
+                        BirthDate = birthDate,
                     };
 
                     _context.Set<Client>().Add(clientProfile);
@@ -76,50 +77,35 @@ namespace BusinessLogicLayer.Services
             }
         }
 
-        public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
+        public async Task<string> LoginAsync(string email, string password)
         {
-            var user = await _userManager.FindByEmailAsync(dto.Email);
+            var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
             {
-                return new AuthResponseDto
-                {
-                    IsSuccess = false,
-                    Token = string.Empty,
-                    ErrorMessage = "Неверный логин или пароль"
-                };
+                return string.Empty;
             }
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
+            var result = await _signInManager.CheckPasswordSignInAsync(user, password, false);
 
             // если аккаунт уже временно заморожен
             if (result.IsLockedOut)
             {
-                return new AuthResponseDto
-                { 
-                    IsSuccess = false,
-                    Token = string.Empty, 
-                    ErrorMessage = "Аккаунт заблокирован из-за лимита неверных попыток"
-                };
+                return string.Empty;
             }
 
             if (!result.Succeeded)
             {
-                return new AuthResponseDto
-                {
-                    IsSuccess = false, 
-                    Token = string.Empty,
-                    ErrorMessage = "Неверный логин или пароль"
-                };
+                return string.Empty;
             }
 
             var token = await _tokenService.GenerateJwtTokenAsync(user);
 
-            return new AuthResponseDto
-            {
-                IsSuccess = true, 
-                Token = token,
-                ErrorMessage = "Вход успешно выполнен"
-            };
+            return token;
+        }
+
+        public async Task Logout()
+        {
+            await _signInManager.SignOutAsync();
         }
     }
 }
