@@ -1,11 +1,13 @@
 using BankSystemAPI.BackgroundWorkers;
 using DataAccessLayer.Database;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.OpenApi;
+using Swashbuckle.AspNetCore;
 
 
 namespace BankSystemAPI
@@ -79,7 +81,29 @@ namespace BankSystemAPI
             builder.Services.AddHostedService<CreditPaymentBackgroundWorker>();
             builder.Services.AddHostedService<DepositPaymentBackgroundService>();
 
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(options => 
+            {
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Введите ваш JWT токен:"
+                });
+
+                options.AddSecurityRequirement(document =>
+                {
+                    var requirement = new OpenApiSecurityRequirement
+                    {
+                        // Используем индексный синтаксис C#, передавая спец-ссылку и пустой массив строк/скоупов
+                        [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
+                    };
+
+                    return requirement;
+                });
+            });
 
             var app = builder.Build();
 
