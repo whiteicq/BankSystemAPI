@@ -24,7 +24,7 @@ namespace BusinessLogicLayer.Services
         }
 
         // запрос клиента на кредит
-        public Credit RequestCredit(long clientId, decimal sumOfLoan, int term, decimal interest)
+        public Credit RequestCredit(long userId, decimal sumOfLoan, int term, decimal interest)
         {
             if (sumOfLoan <= 0)
             {
@@ -41,7 +41,7 @@ namespace BusinessLogicLayer.Services
                 throw new ArgumentOutOfRangeException();
             }
 
-            Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFound("");
+            Client client = _context.Set<Client>().FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFound("");
 
             if (!LocalValidator.IsActive(client))
             {
@@ -122,7 +122,7 @@ namespace BusinessLogicLayer.Services
             {
                 try
                 {
-                    _transactionService.TransferMoney(currentCredit.LoanAmount, masterBankAccount.Id, bankAccountRecieverId);
+                    _transactionService.SystemTransferMoney(currentCredit.LoanAmount, masterBankAccount.Id, bankAccountRecieverId, TransactionType.Credit);
                     OpenCreditBankAccount(clientId, creditId);
 
                     _context.SaveChanges();
@@ -190,7 +190,7 @@ namespace BusinessLogicLayer.Services
                         BankAccount currentBankAccount = bankAccountsOfClientForWriteOff.First();
                         BankAccount masterBankAccount = GetMasterBankAccount(credit);
 
-                        _transactionService.TransferMoney(montlyPayment, currentBankAccount.Id, masterBankAccount.Id, TransactionType.Credit, credit.Currency);
+                        _transactionService.SystemTransferMoney(montlyPayment, currentBankAccount.Id, masterBankAccount.Id, TransactionType.Credit, credit.Currency);
 
                         BankAccount? creditBankAccount = _context.Set<BankAccount>().FirstOrDefault(ba => ba.Id == credit.BankAccountId) ?? throw new KeyNotFoundException();
                         credit.LoanBalance -= montlyPayment;

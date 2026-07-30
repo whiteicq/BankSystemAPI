@@ -29,9 +29,9 @@ namespace BankSystemAPI.Controllers
             {
                 return Unauthorized("Пользователь не найден!");
             }
-            long currentClientId = long.Parse(userIdClaim);
+            long currentUserId = long.Parse(userIdClaim);
 
-            BankAccount bankAccount = _bankAccountService.OpenBankAccount(currentClientId, requestDto.BankId, requestDto.bankAccountType);
+            BankAccount bankAccount = _bankAccountService.OpenBankAccount(currentUserId, requestDto.BankId, requestDto.bankAccountType);
 
             // manual mapping
             BankAccountResponseDto responseDto = new BankAccountResponseDto
@@ -40,7 +40,7 @@ namespace BankSystemAPI.Controllers
                 MoneyBalance = bankAccount.MoneyBalance,
                 Type = bankAccount.Type,
                 Status = bankAccount.Status,
-                ClientId = currentClientId
+                ClientId = bankAccount.ClientId
             };
 
             return Created(uri: string.Empty, responseDto);

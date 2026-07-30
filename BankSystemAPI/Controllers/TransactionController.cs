@@ -43,7 +43,8 @@ namespace BankSystemAPI.Controllers
                 SenderBankAccountNumber = completedTransaction.Sender.BankAccountNumber,
                 ReceiverBankAccountNumber = completedTransaction.Receiver.BankAccountNumber,
                 Type = completedTransaction.Type,
-                Currency = completedTransaction.Currency
+                Currency = completedTransaction.Currency,
+                CreatedAt = completedTransaction.CreatedAt
             };
             return Ok(transactionResponseDto);
         }

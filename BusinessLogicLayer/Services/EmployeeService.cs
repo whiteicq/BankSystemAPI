@@ -35,6 +35,7 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges();
         }
 
+        // ДОЛЖЕН ВЫЗЫВАТЬСЯ ICreditService.OpenCreditBankAccount(...)
         public void ActiveCredit(long creditId)
         {
             Credit credit = _context.Set<Credit>().Find(creditId) ?? throw new KeyNotFoundException();
@@ -43,6 +44,7 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges();
         }
 
+        // ДОЛЖЕН ВЫЗЫВАТЬСЯ IDepositService.OpenDepositBankAccount(...)
         public void ActiveDeposit(long depositId)
         {
             Deposit deposit = _context.Set<Deposit>().Find(depositId) ?? throw new KeyNotFoundException();
@@ -99,6 +101,7 @@ namespace BusinessLogicLayer.Services
             }
         }
 
+        // ДОЛЖЕН БЫТЬ МЕТОД ЗАКРЫТИЯ ИЗ СЕРВИСА!
         public void CloseBankAccount(long bankAccountId)
         {
             BankAccount bankAccount = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new KeyNotFoundException();

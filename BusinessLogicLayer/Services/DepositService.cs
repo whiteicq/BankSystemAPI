@@ -21,7 +21,7 @@ namespace BusinessLogicLayer.Services
             _transactionService = transactionService;
         }
 
-        public void RequestDeposit(long clientId, decimal sumOfDeposit, int term, decimal interest)
+        public Deposit RequestDeposit(long userId, decimal sumOfDeposit, int term, decimal interest)
         {
             if (sumOfDeposit <= 0)
             {
@@ -38,7 +38,7 @@ namespace BusinessLogicLayer.Services
                 throw new ArgumentOutOfRangeException();
             }
 
-            Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFound("");
+            Client client = _context.Set<Client>().FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFound("");
             if (!LocalValidator.IsActive(client))
             {
                 throw new InvalidOperationException();
@@ -55,6 +55,8 @@ namespace BusinessLogicLayer.Services
 
             _context.Set<Deposit>().Add(deposit);
             _context.SaveChanges();
+
+            return deposit;
         }
 
         private decimal CalculateMonthlyPayment(decimal moneyBalance, decimal interest)
@@ -132,7 +134,7 @@ namespace BusinessLogicLayer.Services
                 try
                 {
                     BankAccount depositBankAccount = OpenDepositBankAccount(clientId, depositId);
-                    _transactionService.TransferMoney(currentDeposit.DepositAmount, bankAccountSenderId, 
+                    _transactionService.SystemTransferMoney(currentDeposit.DepositAmount, bankAccountSenderId, 
                         depositBankAccount.Id, 
                         TransactionType.Deposit);
 
@@ -165,14 +167,14 @@ namespace BusinessLogicLayer.Services
                         decimal monthlyAccrual = CalculateMonthlyPayment(deposit.BankAccount!.MoneyBalance, deposit.DepositInterest);
                         BankAccount masterBankAccount = GetMasterBankAccount(deposit);
                         
-                        _transactionService.TransferMoney(monthlyAccrual, masterBankAccount.Id, deposit.BankAccount.Id);
+                        _transactionService.SystemTransferMoney(monthlyAccrual, masterBankAccount.Id, deposit.BankAccount.Id);
                         if (DateTime.Today.Year == deposit.OpenedAt.Year)
                         {
-                            deposit.Status = DepositStatus.Closed;
                             BankAccount bankAccount = _context.Set<BankAccount>().First(ba => ba.ClientId == deposit.Client.Id && ba.Status == BankAccountStatus.Active && ba.Type == BankAccountType.Current);
+                            
                             // если срок вклада закончился, перевод средств клиенту 
-                            _transactionService.TransferMoney(deposit.BankAccount.MoneyBalance, deposit.BankAccount.Id, bankAccount.Id);
-                            deposit.BankAccount.Status = BankAccountStatus.Closed;
+                            _transactionService.SystemTransferMoney(deposit.BankAccount.MoneyBalance, deposit.BankAccount.Id, bankAccount.Id);
+                            _bankAccountService.CloseBankAccount(deposit.BankAccount.Id);
                             deposit.Status = DepositStatus.Closed;
                         }
 

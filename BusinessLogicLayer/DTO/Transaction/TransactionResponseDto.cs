@@ -11,6 +11,7 @@ namespace BusinessLogicLayer.DTO.Transaction
         public decimal TransactionAmount { get; set; }
         public string SenderBankAccountNumber { get; set; } = null!;
         public string ReceiverBankAccountNumber { get; set; } = null!;
+        public DateOnly CreatedAt { get; set; }
         public TransactionType Type { get; set; }
         public CurrencyType Currency { get; set; }
     }

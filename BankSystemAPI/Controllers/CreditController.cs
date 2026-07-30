@@ -19,7 +19,7 @@ namespace BankSystemAPI.Controllers
             _creditService = creditService;
         }
 
-        [HttpPost("register")]
+        [HttpPost("creditRequest")]
         public IActionResult CreateCreditRequest([FromBody] CreditRequestDto creditRequestDto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -28,9 +28,9 @@ namespace BankSystemAPI.Controllers
                 return Unauthorized("Пользователь не найден");
             }
 
-            long currentClientId = long.Parse(userIdClaim);
+            long currentUserId = long.Parse(userIdClaim);
 
-            Credit creditRequest = _creditService.RequestCredit(currentClientId, creditRequestDto.SumOfLoan, creditRequestDto.Term, creditRequestDto.Interest);
+            Credit creditRequest = _creditService.RequestCredit(currentUserId, creditRequestDto.SumOfLoan, creditRequestDto.Term, creditRequestDto.Interest);
 
             CreditResponseDto creditResponseDto = new CreditResponseDto
             {
@@ -41,7 +41,7 @@ namespace BankSystemAPI.Controllers
                 OpenedAt = creditRequest.OpenedAt,
                 Currency = creditRequest.Currency,
                 Status = creditRequest.Status,
-                ClientId = currentClientId
+                ClientId = creditRequest.ClientId
             };
 
             return Created("", creditResponseDto);

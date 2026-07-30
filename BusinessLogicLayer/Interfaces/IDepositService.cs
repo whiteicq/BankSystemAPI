@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using DataAccessLayer.Entities;
 
 namespace BusinessLogicLayer.Interfaces
 {
     public interface IDepositService
     {
-        void RequestDeposit(long clientId, decimal sumOfDeposit, int term, decimal interest);
+        Deposit RequestDeposit(long userId, decimal sumOfDeposit, int term, decimal interest);
         void TransferMoneyForDeposit(long clientId, long depositId, long bankAccountSenderId);
         void ExecuteDepositMonthlyPayments();
     }

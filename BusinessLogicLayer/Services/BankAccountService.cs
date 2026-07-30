@@ -3,7 +3,6 @@ using BusinessLogicLayer.Infrastructure;
 using BusinessLogicLayer.Interfaces;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Enums.BankAccount;
-using DataAccessLayer.Enums.Common;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -38,9 +37,9 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges(); 
         }
         
-        public BankAccount OpenBankAccount(long clientId, long bankId, BankAccountType bankAccountType = BankAccountType.Current)
+        public BankAccount OpenBankAccount(long userId, long bankId, BankAccountType bankAccountType = BankAccountType.Current)
         {
-            Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFound($"{nameof(client)} is null");
+            Client client = _context.Set<Client>().FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFound($"{nameof(client)} is null");
 
             if (LocalValidator.IsActive(client))
             {
