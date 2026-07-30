@@ -21,7 +21,7 @@ namespace BankSystemAPI.Controllers
             _bankAccountService = bankAccountService;
         }
 
-        [HttpPost]
+        [HttpPost("open")]
         public IActionResult OpenBankAccount([FromBody] OpenBankAccountRequestDto requestDto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

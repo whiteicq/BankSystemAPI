@@ -97,7 +97,6 @@ namespace BankSystemAPI
                 {
                     var requirement = new OpenApiSecurityRequirement
                     {
-                        // Используем индексный синтаксис C#, передавая спец-ссылку и пустой массив строк/скоупов
                         [new OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
                     };
 
