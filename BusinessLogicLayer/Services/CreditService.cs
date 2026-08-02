@@ -198,7 +198,7 @@ namespace BusinessLogicLayer.Services
                         if (creditBankAccount.MoneyBalance >= 0 || credit.LoanBalance <= 0)
                         {
                             credit.Status = CreditStatus.Closed;
-                            _bankAccountService.CloseBankAccount(creditBankAccount.Id);
+                            _bankAccountService.SystemCloseBankAccount(creditBankAccount.Id);
                         }
 
                         _context.SaveChanges();

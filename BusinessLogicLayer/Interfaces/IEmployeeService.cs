@@ -15,7 +15,7 @@ namespace BusinessLogicLayer.Interfaces
         void BlockClient(long clientId);
 
         // активировать счет
-        void ActiveBankAccount(long bankAccountId);
+        void ActivateBankAccount(long bankAccountId);
 
         // заморозить счет
         void FreezeBankAccount(long bankAccountId);
@@ -27,13 +27,13 @@ namespace BusinessLogicLayer.Interfaces
         void BlockBankAccount(long bankAccountId);
 
         // активировать(одобрить) кредит
-        void ActiveCredit(long creditId);
+        void ActivateCredit(long creditId);
 
         // отклонить (не одобрить) кредит
         void RejectCredit(long creditId);
 
         // активировать(одобрить) депозит
-        void ActiveDeposit(long depositId);
+        void ActivateDeposit(long depositId);
 
         // отклонить (не одобрить) депозит
         void RejectDeposit(long depositId);

@@ -13,10 +13,12 @@ namespace BusinessLogicLayer.Services
     public class EmployeeService : IEmployeeService
     {
         private readonly DbContext _context;
+        private readonly IBankAccountService _bankAccountService;
 
-        public EmployeeService(DbContext context)
+        public EmployeeService(DbContext context, IBankAccountService bankAccountService)
         {
             _context = context;
+            _bankAccountService = bankAccountService;
         }
 
         public void ActivateClient(long clientId)
@@ -27,7 +29,7 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges();
         }
 
-        public void ActiveBankAccount(long bankAccountId)
+        public void ActivateBankAccount(long bankAccountId)
         {
             BankAccount bankAccount = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new KeyNotFoundException();
             bankAccount.Status = BankAccountStatus.Active;
@@ -35,8 +37,7 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges();
         }
 
-        // ДОЛЖЕН ВЫЗЫВАТЬСЯ ICreditService.OpenCreditBankAccount(...)
-        public void ActiveCredit(long creditId)
+        public void ActivateCredit(long creditId)
         {
             Credit credit = _context.Set<Credit>().Find(creditId) ?? throw new KeyNotFoundException();
             credit.Status = CreditStatus.Active;
@@ -44,8 +45,7 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges();
         }
 
-        // ДОЛЖЕН ВЫЗЫВАТЬСЯ IDepositService.OpenDepositBankAccount(...)
-        public void ActiveDeposit(long depositId)
+        public void ActivateDeposit(long depositId)
         {
             Deposit deposit = _context.Set<Deposit>().Find(depositId) ?? throw new KeyNotFoundException();
             deposit.Status = DepositStatus.Active;
@@ -75,8 +75,7 @@ namespace BusinessLogicLayer.Services
                 .Include(tr => tr.Sender)
                 .Include(tr => tr.Receiver)
                 .FirstOrDefault(tr => tr.Id == transactionId 
-                && tr.Status == TransactionStatus.Confirmed 
-                && tr.Type == TransactionType.PeerToPeer) ?? throw new KeyNotFoundException();
+                && tr.Status == TransactionStatus.Confirmed) ?? throw new KeyNotFoundException();
            
             BankAccount sender = transaction.Sender;
             BankAccount receiver = transaction.Receiver;
@@ -101,13 +100,9 @@ namespace BusinessLogicLayer.Services
             }
         }
 
-        // ДОЛЖЕН БЫТЬ МЕТОД ЗАКРЫТИЯ ИЗ СЕРВИСА!
         public void CloseBankAccount(long bankAccountId)
         {
-            BankAccount bankAccount = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new KeyNotFoundException();
-            bankAccount.Status = BankAccountStatus.Closed;
-
-            _context.SaveChanges();
+            _bankAccountService.SystemCloseBankAccount(bankAccountId);
         }
 
         public void FreezeBankAccount(long bankAccountId)

@@ -29,6 +29,7 @@ namespace BankSystemAPI.Controllers
             {
                 return Unauthorized("Пользователь не найден!");
             }
+
             long currentUserId = long.Parse(userIdClaim);
 
             BankAccount bankAccount = _bankAccountService.OpenBankAccount(currentUserId, requestDto.BankId, requestDto.bankAccountType);
@@ -44,6 +45,22 @@ namespace BankSystemAPI.Controllers
             };
 
             return Created(uri: string.Empty, responseDto);
+        }
+
+        [HttpPatch("close")]
+        public IActionResult CloseBankAccount(string bankAccountNumber)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized("Пользователь не найден!");
+            }
+
+            long currentUserId = long.Parse(userIdClaim);
+
+            _bankAccountService.CloseBankAccount(currentUserId, bankAccountNumber);
+
+            return Ok();
         }
     }
 }

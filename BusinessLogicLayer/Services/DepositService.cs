@@ -174,7 +174,7 @@ namespace BusinessLogicLayer.Services
                             
                             // если срок вклада закончился, перевод средств клиенту 
                             _transactionService.SystemTransferMoney(deposit.BankAccount.MoneyBalance, deposit.BankAccount.Id, bankAccount.Id);
-                            _bankAccountService.CloseBankAccount(deposit.BankAccount.Id);
+                            _bankAccountService.SystemCloseBankAccount(deposit.BankAccount.Id);
                             deposit.Status = DepositStatus.Closed;
                         }
 

@@ -4,6 +4,7 @@ using BusinessLogicLayer.Interfaces;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Enums.BankAccount;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -18,9 +19,16 @@ namespace BusinessLogicLayer.Services
             _context = context;
         }
 
-        public void CloseBankAccount(long bankAccountId)
+        public void CloseBankAccount(long userId, string bankAccountNumber)
         {
-            BankAccount bankAccountToClose = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new KeyNotFoundException();
+            Client client = _context.Set<Client>().Include(cl => cl.BankAccounts).FirstOrDefault(cl => cl.UserId == userId) ?? throw new KeyNotFoundException();
+
+            BankAccount bankAccountToClose = client.BankAccounts.FirstOrDefault(ba => ba.BankAccountNumber == bankAccountNumber) ?? throw new InvalidOperationException();
+            
+            if (!LocalValidator.IsActive(bankAccountToClose))
+            {
+                throw new InvalidOperationException("Невозможно закрыть неактивный счет");
+            }
 
             if (bankAccountToClose.MoneyBalance > 0)
             {
@@ -37,6 +45,30 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges(); 
         }
         
+        public void SystemCloseBankAccount(long bankAccountId)
+        {
+            BankAccount bankAccountToClose = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new InvalidOperationException();
+
+            if (!LocalValidator.IsActive(bankAccountToClose))
+            {
+                throw new InvalidOperationException("Невозможно закрыть неактивный счет");
+            }
+
+            if (bankAccountToClose.MoneyBalance > 0)
+            {
+                throw new InvalidOperationException("Невозможно закрыть счет со средствами на балансе");
+            }
+
+            if (bankAccountToClose.MoneyBalance < 0)
+            {
+                throw new InvalidOperationException("Невозможно закрыть счет с задолженностью на балансе");
+            }
+
+            bankAccountToClose.Status = BankAccountStatus.Closed;
+            bankAccountToClose.ClosedAt = DateOnly.FromDateTime(DateTime.UtcNow);
+            _context.SaveChanges();
+        }
+
         public BankAccount OpenBankAccount(long userId, long bankId, BankAccountType bankAccountType = BankAccountType.Current)
         {
             Client client = _context.Set<Client>().FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFound($"{nameof(client)} is null");
