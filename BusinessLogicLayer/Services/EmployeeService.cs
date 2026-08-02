@@ -14,11 +14,15 @@ namespace BusinessLogicLayer.Services
     {
         private readonly DbContext _context;
         private readonly IBankAccountService _bankAccountService;
+        private readonly ICreditService _creditService;
+        private readonly IDepositService _depositService;
 
-        public EmployeeService(DbContext context, IBankAccountService bankAccountService)
+        public EmployeeService(DbContext context, IBankAccountService bankAccountService, ICreditService creditService, IDepositService depositService)
         {
             _context = context;
             _bankAccountService = bankAccountService;
+            _creditService = creditService;
+            _depositService = depositService;
         }
 
         public void ActivateClient(long clientId)
@@ -37,20 +41,14 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges();
         }
 
-        public void ActivateCredit(long creditId)
-        {
-            Credit credit = _context.Set<Credit>().Find(creditId) ?? throw new KeyNotFoundException();
-            credit.Status = CreditStatus.Active;
-
-            _context.SaveChanges();
+        public void ActivateCredit(long clientId, long creditId, long bankAccountRecieverId)
+        { 
+            _creditService.TransferMoneyForLoan(clientId, creditId, bankAccountRecieverId);
         }
 
-        public void ActivateDeposit(long depositId)
+        public void ActivateDeposit(long clientId, long depositId, long bankAccountSenderId)
         {
-            Deposit deposit = _context.Set<Deposit>().Find(depositId) ?? throw new KeyNotFoundException();
-            deposit.Status = DepositStatus.Active;
-
-            _context.SaveChanges();
+            _depositService.TransferMoneyForDeposit(clientId, depositId, bankAccountSenderId);
         }
 
         public void BlockBankAccount(long bankAccountId)
@@ -132,6 +130,6 @@ namespace BusinessLogicLayer.Services
             deposit.Status = DepositStatus.Rejected;
 
             _context.SaveChanges();
-        }
+        } 
     }
 }

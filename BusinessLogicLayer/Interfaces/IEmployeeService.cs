@@ -27,13 +27,13 @@ namespace BusinessLogicLayer.Interfaces
         void BlockBankAccount(long bankAccountId);
 
         // активировать(одобрить) кредит
-        void ActivateCredit(long creditId);
+        void ActivateCredit(long clientId, long creditId, long bankAccountRecieverId);
 
         // отклонить (не одобрить) кредит
         void RejectCredit(long creditId);
 
         // активировать(одобрить) депозит
-        void ActivateDeposit(long depositId);
+        void ActivateDeposit(long clientId, long depositId, long bankAccountSenderId);
 
         // отклонить (не одобрить) депозит
         void RejectDeposit(long depositId);

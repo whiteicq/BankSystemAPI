@@ -96,7 +96,7 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges();
         }
 
-        // перевод денег по кредиту в случае одобрения кредита
+        // перевод денег по кредиту в случае одобрения кредита (ВЫЗЫВАТЬ СОТРУДНИКОМ ПРИ ОДОБРЕНИИ!)
         public void TransferMoneyForLoan(long clientId, long creditId, long bankAccountRecieverId)
         {
             Client client = _context.Set<Client>().Include(cl => cl.BankAccounts).FirstOrDefault(cl => cl.Id == clientId) ?? throw new ClientNotFound("");
@@ -111,8 +111,10 @@ namespace BusinessLogicLayer.Services
                 throw new InvalidOperationException();
             }
 
-            Credit currentCredit = _context.Set<Credit>().Find(creditId) ?? throw new KeyNotFoundException();
-            if (!LocalValidator.IsActive(currentCredit))
+            Credit currentCredit = _context.Set<Credit>().FirstOrDefault(cr => cr.Id == creditId && cr.ClientId == client.Id) ?? throw new KeyNotFoundException();
+
+            // по уже одобренному кредиту нельзя перевести деньги дважды!
+            if (LocalValidator.IsActive(currentCredit))
             {
                 throw new InvalidOperationException();
             }
@@ -125,6 +127,7 @@ namespace BusinessLogicLayer.Services
                     _transactionService.SystemTransferMoney(currentCredit.LoanAmount, masterBankAccount.Id, bankAccountRecieverId, TransactionType.Credit);
                     OpenCreditBankAccount(clientId, creditId);
 
+                    currentCredit.Status = CreditStatus.Active;
                     _context.SaveChanges();
                     _transaction.Commit();
                 }

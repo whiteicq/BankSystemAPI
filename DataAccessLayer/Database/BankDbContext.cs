@@ -15,8 +15,6 @@ public class BankDbContext : IdentityDbContext<ApplicationUser,
     IdentityUserLogin<long>,
     IdentityRoleClaim<long>, 
     IdentityUserToken<long>>
-
-
 {
     public DbSet<Bank> Banks { get; set; }
 

@@ -9,7 +9,7 @@ namespace BankSystemAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Client")]
     public class CreditController : ControllerBase
     {
         private readonly ICreditService _creditService;

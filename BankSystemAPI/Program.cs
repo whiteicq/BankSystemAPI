@@ -9,16 +9,16 @@ using System.Text;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore;
 
-
 namespace BankSystemAPI
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
             var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
+            //var connectionString = "Server=DESKTOP-MVM6JB1;Database=BankSystemDB;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true";
             builder.Services.AddDbContext<BankDbContext>(options =>
             {
                 options.UseSqlServer(connectionString);
@@ -64,15 +64,6 @@ namespace BankSystemAPI
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
                 };
             });
-
-            // Политики авторизации
-            builder.Services.AddAuthorization(options =>
-            {
-                options.AddPolicy("EmployeeOnly", policy => policy.RequireRole("Employee"));
-                options.AddPolicy("ClientOnly", policy => policy.RequireRole("Client"));
-                //options.AddPolicy("CanManageOperations", policy => policy.RequireRole("Employee", "Admin"));
-            });
-            // Add services to the container.
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

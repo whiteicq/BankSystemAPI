@@ -1,7 +1,5 @@
 ﻿using DataAccessLayer.Enums.Common;
 using DataAccessLayer.Enums.FinancialProduct.Deposit;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace DataAccessLayer.Entities;
@@ -21,7 +19,7 @@ public partial class Deposit
     public DateOnly? ClosedAt { get; set; }
 
     [MaxLength(20)]
-    public DepositStatus Status { get; set; }
+    public DepositStatus Status { get; set; } = DepositStatus.Unactivated;
 
     [MaxLength(3)]
     public CurrencyType Currency { get; set; } = CurrencyType.BYN;

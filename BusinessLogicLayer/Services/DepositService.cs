@@ -49,7 +49,6 @@ namespace BusinessLogicLayer.Services
                 DepositAmount = sumOfDeposit,
                 DepositTerm = term,
                 DepositInterest = interest,
-                Status = DepositStatus.Unactivated,
                 Client = client
             };
 
@@ -105,21 +104,22 @@ namespace BusinessLogicLayer.Services
 
         public void TransferMoneyForDeposit(long clientId, long depositId, long bankAccountSenderId)
         {
-            Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFound("");
+            Client client = _context.Set<Client>().Include(cl => cl.BankAccounts).FirstOrDefault(cl => cl.Id == clientId) ?? throw new ClientNotFound("");
             if (!LocalValidator.IsActive(client))
             {
                 throw new InvalidOperationException();
             }
 
-            Deposit currentDeposit = _context.Set<Deposit>().Find(depositId) ?? throw new KeyNotFoundException();
-            if (!LocalValidator.IsActive(currentDeposit))
+            BankAccount bankAccountSender = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountSenderId) ?? throw new KeyNotFoundException();
+            if (!LocalValidator.IsActive(bankAccountSender))
             {
                 throw new InvalidOperationException();
             }
 
-            BankAccount masterBankAccount = GetMasterBankAccount(currentDeposit);
-            BankAccount bankAccountSender = _context.Set<BankAccount>().Find(bankAccountSenderId) ?? throw new KeyNotFoundException();
-            if (!LocalValidator.IsActive(bankAccountSender))
+            Deposit currentDeposit = _context.Set<Deposit>().FirstOrDefault(dp => dp.Id == depositId && dp.Client.Id == clientId) ?? throw new KeyNotFoundException();
+
+            // по уже одобренного депозита нельзя перевести деньги дважды!
+            if (LocalValidator.IsActive(currentDeposit))
             {
                 throw new InvalidOperationException();
             }
@@ -129,6 +129,8 @@ namespace BusinessLogicLayer.Services
                 throw new InvalidOperationException();
             }
 
+            BankAccount masterBankAccount = GetMasterBankAccount(currentDeposit);
+            
             using (var _transaction = _context.Database.BeginTransaction())
             {
                 try
@@ -138,6 +140,7 @@ namespace BusinessLogicLayer.Services
                         depositBankAccount.Id, 
                         TransactionType.Deposit);
 
+                    currentDeposit.Status = DepositStatus.Active;
                     _context.SaveChanges();
                     _transaction.Commit();
                 }

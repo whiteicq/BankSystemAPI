@@ -1,9 +1,7 @@
-﻿using BusinessLogicLayer.DTO;
-using BusinessLogicLayer.Interfaces;
+﻿using BusinessLogicLayer.Interfaces;
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BusinessLogicLayer.Services
 {
@@ -38,7 +36,7 @@ namespace BusinessLogicLayer.Services
                     var identityResult = await _userManager.CreateAsync(user, password);
                     if (!identityResult.Succeeded)
                     {
-                        throw new Exception();
+                        throw new Exception("Не удалось создать пользователя");
                     }
 
                     await _userManager.AddToRoleAsync(user, "Client");
@@ -56,7 +54,7 @@ namespace BusinessLogicLayer.Services
                     var clientProfile = new Client
                     {
                         UserId = user.Id,
-                        PassportId = passport.Id,
+                        Passport = passport,
                         Name = name,
                         Surname = surname,
                         Patronymic = patronymic,
@@ -65,7 +63,63 @@ namespace BusinessLogicLayer.Services
                     };
 
                     _context.Set<Client>().Add(clientProfile);
-                    
+
+                    await _context.SaveChangesAsync();
+                    await _transaction.CommitAsync();
+                }
+                catch
+                {
+                    _transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        public async Task RegisterEmployeeAsync(string email, string password, string name, string? patronymic, string surname, string phoneNumber, DateOnly birthDate, string identificationNumber, string passportSeries, string passportNumber)
+        {
+            using (var _transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    ApplicationUser user = new ApplicationUser
+                    {
+                        UserName = $"{surname} {name} {patronymic}".Trim(),
+                        Email = email
+                    };
+
+                    var identityResult = await _userManager.CreateAsync(user, password);
+                    if (!identityResult.Succeeded)
+                    {
+                        throw new Exception("Не удалось создать пользователя");
+                    }
+
+                    await _userManager.AddToRoleAsync(user, "Employee");
+
+                    Passport passport = new Passport
+                    {
+                        Series = passportSeries,
+                        Number = passportNumber,
+                        IdentificationNumber = identificationNumber
+                    };
+
+                    _context.Set<Passport>().Add(passport);
+                    _context.SaveChanges();
+
+                    Employee employee = new Employee
+                    {
+                        UserId = user.Id,
+                        Name = name,
+                        Patronymic = patronymic,
+                        Surname = surname,
+                        BirthDate = birthDate,
+                        PhoneNumber = phoneNumber,
+                        Passport = passport,
+                        HireDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                        Role = "Operator",
+                    };
+
+                    _context.Set<Employee>().Add(employee);
+
                     await _context.SaveChangesAsync();
                     await _transaction.CommitAsync();
                 }

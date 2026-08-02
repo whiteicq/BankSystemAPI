@@ -3,11 +3,13 @@ using BusinessLogicLayer.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using DataAccessLayer.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BankSystemAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Client")]
     public class DepositController : ControllerBase
     {
         private readonly IDepositService _depositService;

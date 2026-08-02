@@ -1,17 +1,15 @@
-﻿using BusinessLogicLayer.Services;
-using BusinessLogicLayer.Interfaces;
+﻿using BusinessLogicLayer.Interfaces;
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Mvc;
 using BusinessLogicLayer.DTO.BankAccount;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using System.Diagnostics.Eventing.Reader;
 
 namespace BankSystemAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Client")]
     public class BankAccountController : ControllerBase
     {
         private readonly IBankAccountService _bankAccountService;

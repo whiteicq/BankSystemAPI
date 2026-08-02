@@ -1,10 +1,12 @@
 ﻿using BusinessLogicLayer.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BankSystemAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Employee, Admin")]
     public class EmployeeController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;
@@ -31,17 +33,17 @@ namespace BankSystemAPI.Controllers
         }
 
         [HttpPatch("activateCredit")]
-        public IActionResult ActivateCredit(long creditId)
+        public IActionResult ActivateCredit(long clientId, long creditId, long bankAccountRecieverId)
         {
-            _employeeService.ActivateCredit(creditId);
+            _employeeService.ActivateCredit(clientId, creditId, bankAccountRecieverId);
 
             return Ok();
         }
 
         [HttpPatch("activateDeposit")]
-        public IActionResult ActivateDeposit(long depositId)
+        public IActionResult ActivateDeposit(long clientId, long depositId, long bankAccountSenderId)
         {
-            _employeeService.ActivateDeposit(depositId);
+            _employeeService.ActivateDeposit(clientId, depositId, bankAccountSenderId);
 
             return Ok();
         }

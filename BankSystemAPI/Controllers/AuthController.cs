@@ -1,6 +1,7 @@
-﻿using BusinessLogicLayer.Interfaces;
+﻿using BusinessLogicLayer.DTO.Auth;
+using BusinessLogicLayer.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using BusinessLogicLayer.DTO.Auth;
 
 namespace BankSystemAPI.Controllers
 {
@@ -15,7 +16,7 @@ namespace BankSystemAPI.Controllers
             _authService = authService;
         }
 
-        [HttpPost("register")]
+        [HttpPost("registerClient")]
         public async Task<IActionResult> RegisterClient([FromBody] AuthRequestDto registerDto)
         {
             await _authService.RegisterClientAsync(registerDto.Email, registerDto.Password, registerDto.Name, registerDto.Patronymic, registerDto.Surname, registerDto.PhoneNumber, registerDto.BirthDate, registerDto.Passport.IdentificationNumber, registerDto.Passport.Series, registerDto.Passport.Number);
@@ -37,6 +38,7 @@ namespace BankSystemAPI.Controllers
         }
 
         [HttpGet("logout")]
+        [Authorize(Roles = "Client, Employee")]
         public async Task<IActionResult> Logout()
         {
             await _authService.Logout();
