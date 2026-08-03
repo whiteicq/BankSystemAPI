@@ -6,6 +6,7 @@ using DataAccessLayer.Enums.BankAccount;
 using DataAccessLayer.Enums.FinancialProduct.Deposit;
 using Microsoft.EntityFrameworkCore;
 using DataAccessLayer.Enums.Transaction;
+using DataAccessLayer.Enums.Logs;
 
 namespace BusinessLogicLayer.Services
 {
@@ -14,11 +15,13 @@ namespace BusinessLogicLayer.Services
         private readonly DbContext _context;
         private readonly IBankAccountService _bankAccountService;
         private readonly ITransactionService _transactionService;
-        public DepositService(DbContext context, IBankAccountService bankAccountService, ITransactionService transactionService)
+        private readonly ILoggerService _loggerService;
+        public DepositService(DbContext context, IBankAccountService bankAccountService, ITransactionService transactionService, ILoggerService loggerService)
         {
             _context = context;
             _bankAccountService = bankAccountService;
             _transactionService = transactionService;
+            _loggerService = loggerService;
         }
 
         public Deposit RequestDeposit(long userId, decimal sumOfDeposit, int term, decimal interest)
@@ -54,6 +57,8 @@ namespace BusinessLogicLayer.Services
 
             _context.Set<Deposit>().Add(deposit);
             _context.SaveChanges();
+
+            _loggerService.MakeLog(OperationType.DEPOSIT_REQUESTED, nameof(Deposit), deposit.Id, newValue: deposit.Status.ToString());
 
             return deposit;
         }

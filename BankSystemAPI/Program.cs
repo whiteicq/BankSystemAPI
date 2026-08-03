@@ -18,7 +18,6 @@ namespace BankSystemAPI
             var builder = WebApplication.CreateBuilder(args);
 
             var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
-            //var connectionString = "Server=DESKTOP-MVM6JB1;Database=BankSystemDB;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true";
             builder.Services.AddDbContext<BankDbContext>(options =>
             {
                 options.UseSqlServer(connectionString);

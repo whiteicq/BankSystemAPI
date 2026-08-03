@@ -38,9 +38,6 @@ namespace BusinessLogicLayer.Interfaces
         // отклонить (не одобрить) депозит
         void RejectDeposit(long depositId);
 
-        // заморозить транзакцию
-        void FreezeTransaction(long transactionId);
-
         // отменить транзакцию
         void CancelTransaction(long transactionId);
     }

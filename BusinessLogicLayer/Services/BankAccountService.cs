@@ -4,7 +4,7 @@ using BusinessLogicLayer.Interfaces;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Enums.BankAccount;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
+using DataAccessLayer.Enums.Logs;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -12,11 +12,14 @@ namespace BusinessLogicLayer.Services
 {
     public class BankAccountService : IBankAccountService
     {
-        private DbContext _context;
+        private readonly DbContext _context;
+        private readonly ILoggerService _loggerService;
 
-        public BankAccountService(DbContext context)
+
+        public BankAccountService(DbContext context, ILoggerService loggerService)
         {
             _context = context;
+            _loggerService = loggerService;
         }
 
         public void CloseBankAccount(long userId, string bankAccountNumber)
@@ -42,7 +45,9 @@ namespace BusinessLogicLayer.Services
 
             bankAccountToClose.Status = BankAccountStatus.Closed;
             bankAccountToClose.ClosedAt = DateOnly.FromDateTime(DateTime.UtcNow);
-            _context.SaveChanges(); 
+            _context.SaveChanges();
+
+            _loggerService.MakeLog(OperationType.BANK_ACCOUNT_CLOSED, nameof(BankAccount), bankAccountToClose.Id, BankAccountStatus.Active.ToString(), bankAccountToClose.Status.ToString());
         }
         
         public void SystemCloseBankAccount(long bankAccountId)
@@ -67,6 +72,8 @@ namespace BusinessLogicLayer.Services
             bankAccountToClose.Status = BankAccountStatus.Closed;
             bankAccountToClose.ClosedAt = DateOnly.FromDateTime(DateTime.UtcNow);
             _context.SaveChanges();
+
+            _loggerService.MakeLog(OperationType.BANK_ACCOUNT_CLOSED, nameof(BankAccount), bankAccountToClose.Id, BankAccountStatus.Active.ToString(), bankAccountToClose.Status.ToString());
         }
 
         public BankAccount OpenBankAccount(long userId, long bankId, BankAccountType bankAccountType = BankAccountType.Current)
@@ -89,6 +96,8 @@ namespace BusinessLogicLayer.Services
             _context.Set<BankAccount>().Add(newBankAccount);
 
             _context.SaveChanges();
+
+            _loggerService.MakeLog(OperationType.BANK_ACCOUNT_OPENED, nameof(BankAccount), newBankAccount.Id, newValue: BankAccountStatus.Unactivated.ToString());
 
             return newBankAccount;
         }

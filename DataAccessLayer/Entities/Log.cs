@@ -13,7 +13,7 @@ public partial class Log
     [MaxLength(30)]
     public string TargetTable { get; set; } = null!;
 
-    public int TargetRowId { get; set; }
+    public long TargetRowId { get; set; }
     [MaxLength(45)]
     public string? OldValue { get; set; }
     [MaxLength(45)]

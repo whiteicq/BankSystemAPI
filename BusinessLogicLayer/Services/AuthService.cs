@@ -2,7 +2,7 @@
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
+using DataAccessLayer.Enums.Logs;
 namespace BusinessLogicLayer.Services
 {
     public class AuthService : IAuthService
@@ -11,13 +11,15 @@ namespace BusinessLogicLayer.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ITokenService _tokenService;
+        private readonly ILoggerService _loggerService;
 
-        public AuthService(DbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ITokenService tokenService)
+        public AuthService(DbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ITokenService tokenService, ILoggerService loggerService)
         {
             _context = context;
             _userManager = userManager;
             _tokenService = tokenService;
             _signInManager = signInManager;
+            _loggerService = loggerService;
         }
 
         public async Task RegisterClientAsync(string email, string password, string name, string? patronymic, string surname, string phoneNumber, DateOnly birthDate, string identificationNumber, string passportSeries, string passportNumber)
@@ -65,6 +67,9 @@ namespace BusinessLogicLayer.Services
                     _context.Set<Client>().Add(clientProfile);
 
                     await _context.SaveChangesAsync();
+
+                    _loggerService.MakeLog(OperationType.CLIENT_ADDED, nameof(Client), clientProfile.Id);
+
                     await _transaction.CommitAsync();
                 }
                 catch

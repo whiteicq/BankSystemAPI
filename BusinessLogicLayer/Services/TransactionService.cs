@@ -5,16 +5,19 @@ using DataAccessLayer.Entities;
 using Microsoft.EntityFrameworkCore;
 using BusinessLogicLayer.Infrastructure;
 using BusinessLogicLayer.Exceptions.Client;
+using DataAccessLayer.Enums.Logs;
 
 namespace BusinessLogicLayer.Services
 {
     public class TransactionService : ITransactionService
     {
         private readonly DbContext _context;
+        private readonly ILoggerService _loggerService;
 
-        public TransactionService(DbContext context)
+        public TransactionService(DbContext context, ILoggerService loggerService)
         {
             _context = context;
+            _loggerService = loggerService;
         }
         // пока не понятно как приделать тип транзакции и валюту (на моменте списания/зачисления средств)
         public Transaction TransferMoney(long userId, decimal amount, string senderBankAccountNumber, string recieverBankAccountNumber, TransactionType type = TransactionType.PeerToPeer, CurrencyType currency = CurrencyType.BYN)
@@ -69,6 +72,9 @@ namespace BusinessLogicLayer.Services
                     };
 
                     _context.Set<Transaction>().Add(transaction);
+
+                    _loggerService.MakeLog(OperationType.TRANSACTION_COMPLETED, nameof(Transaction), transaction.Id, newValue: amount.ToString());
+
                     _context.SaveChanges();
 
                     if (!isOuterTransaction)
@@ -135,6 +141,9 @@ namespace BusinessLogicLayer.Services
                     };
 
                     _context.Set<Transaction>().Add(transaction);
+
+                    _loggerService.MakeLog(OperationType.TRANSACTION_COMPLETED, nameof(Transaction), transaction.Id, newValue: amount.ToString());
+
                     _context.SaveChanges();
 
                     if (!isOuterTransaction)

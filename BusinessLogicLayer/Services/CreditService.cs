@@ -1,4 +1,4 @@
-﻿ using DataAccessLayer.Enums.FinancialProduct.Credit;
+﻿  using DataAccessLayer.Enums.FinancialProduct.Credit;
 using BusinessLogicLayer.Exceptions.Client;
 using BusinessLogicLayer.Interfaces;
 using DataAccessLayer.Entities;
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using DataAccessLayer.Enums.BankAccount;
 using BusinessLogicLayer.Infrastructure;
 using DataAccessLayer.Enums.Transaction;
-using DataAccessLayer.Enums.Common;
+using DataAccessLayer.Enums.Logs;
 
 namespace BusinessLogicLayer.Services
 {
@@ -15,12 +15,14 @@ namespace BusinessLogicLayer.Services
         private readonly ITransactionService _transactionService;
         private readonly IBankAccountService _bankAccountService;
         private readonly DbContext _context;
-        
-        public CreditService(DbContext context, ITransactionService transactionService, IBankAccountService bankAccountService)
+        private readonly ILoggerService _loggerService;
+
+        public CreditService(DbContext context, ITransactionService transactionService, IBankAccountService bankAccountService, ILoggerService loggerService)
         {
             _context = context;
             _transactionService = transactionService;
             _bankAccountService = bankAccountService;
+            _loggerService = loggerService;
         }
 
         // запрос клиента на кредит
@@ -63,6 +65,8 @@ namespace BusinessLogicLayer.Services
             _context.Set<Credit>().Add(credit);
 
             _context.SaveChanges();
+
+            _loggerService.MakeLog(OperationType.CREDIT_REQUESTED, nameof(Credit), credit.Id, newValue:CreditStatus.Unactivated.ToString());
 
             return credit;
         }
