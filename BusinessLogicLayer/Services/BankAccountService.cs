@@ -78,8 +78,13 @@ namespace BusinessLogicLayer.Services
 
         public BankAccount OpenBankAccount(long userId, long bankId, BankAccountType bankAccountType = BankAccountType.Current)
         {
-            Client client = _context.Set<Client>().FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFound($"{nameof(client)} is null");
+            bool bankExists = _context.Set<Bank>().Any(b => b.Id == bankId);
+            if (!bankExists)
+            {
+                throw new InvalidDataException();
+            }
 
+            Client client = _context.Set<Client>().FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFound($"{nameof(client)} is null");
             if (LocalValidator.IsActive(client))
             {
                 throw new InvalidStatus();

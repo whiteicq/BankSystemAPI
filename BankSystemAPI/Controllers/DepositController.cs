@@ -30,7 +30,7 @@ namespace BankSystemAPI.Controllers
 
             long currentUserId = long.Parse(userIdClaim);
 
-            Deposit currentDeposit = _depositService.RequestDeposit(currentUserId, depositRequestDto.DepositAmount, depositRequestDto.DepositTerm, depositRequestDto.DepositInterest);
+            Deposit currentDeposit = _depositService.RequestDeposit(currentUserId, depositRequestDto.BankId, depositRequestDto.DepositAmount, depositRequestDto.DepositTerm, depositRequestDto.DepositInterest);
 
             DepositResponseDto depositResponseDto = new DepositResponseDto
             {
@@ -39,7 +39,8 @@ namespace BankSystemAPI.Controllers
                 DepositInterest = currentDeposit.DepositInterest,
                 Status = currentDeposit.Status,
                 ClientId = currentDeposit.ClientId,
-                OpenedAt = currentDeposit.OpenedAt
+                OpenedAt = currentDeposit.OpenedAt,
+                BankId = currentDeposit.BankId
             };
 
             return Created(uri: string.Empty, depositResponseDto);

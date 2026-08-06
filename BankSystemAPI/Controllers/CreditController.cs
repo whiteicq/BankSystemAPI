@@ -30,7 +30,7 @@ namespace BankSystemAPI.Controllers
 
             long currentUserId = long.Parse(userIdClaim);
 
-            Credit creditRequest = _creditService.RequestCredit(currentUserId, creditRequestDto.SumOfLoan, creditRequestDto.Term, creditRequestDto.Interest);
+            Credit creditRequest = _creditService.RequestCredit(currentUserId, creditRequestDto.BankId, creditRequestDto.SumOfLoan, creditRequestDto.Term, creditRequestDto.Interest);
 
             CreditResponseDto creditResponseDto = new CreditResponseDto
             {
@@ -41,7 +41,8 @@ namespace BankSystemAPI.Controllers
                 OpenedAt = creditRequest.OpenedAt,
                 Currency = creditRequest.Currency,
                 Status = creditRequest.Status,
-                ClientId = creditRequest.ClientId
+                ClientId = creditRequest.ClientId,
+                BankId = creditRequest.BankId
             };
 
             return Created("", creditResponseDto);

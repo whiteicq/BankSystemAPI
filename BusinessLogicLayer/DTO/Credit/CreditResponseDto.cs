@@ -24,5 +24,7 @@ namespace BusinessLogicLayer.DTO.Credit
         public CurrencyType Currency { get; set; } = CurrencyType.BYN;
 
         public long ClientId { get; set; }
+
+        public long BankId { get; set; }
     }
 }

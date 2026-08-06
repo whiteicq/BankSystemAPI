@@ -26,8 +26,14 @@ namespace BusinessLogicLayer.Services
         }
 
         // запрос клиента на кредит
-        public Credit RequestCredit(long userId, decimal sumOfLoan, int term, decimal interest)
+        public Credit RequestCredit(long userId, long bankId, decimal sumOfLoan, int term, decimal interest)
         {
+            bool bankExists = _context.Set<Bank>().Any(b => b.Id == bankId);
+            if (!bankExists)
+            {
+                throw new InvalidDataException();
+            }   
+
             if (sumOfLoan <= 0)
             {
                 throw new ArgumentOutOfRangeException();
@@ -59,7 +65,8 @@ namespace BusinessLogicLayer.Services
                 LoanBalance = totalLoanBalance,
                 LoanTerm = term,
                 LoanInterest = interest,
-                Client = client
+                Client = client,
+                BankId = bankId
             };
 
             _context.Set<Credit>().Add(credit);
@@ -93,7 +100,8 @@ namespace BusinessLogicLayer.Services
                 Type = BankAccountType.Credit,
                 Status = BankAccountStatus.Active,
                 Client = client,
-                Credit = currentCredit
+                Credit = currentCredit,
+                Bank = currentCredit.Bank
             };
 
             _context.Set<BankAccount>().Add(creditBankAccount);
@@ -109,12 +117,6 @@ namespace BusinessLogicLayer.Services
                 throw new InvalidOperationException();
             }
 
-            BankAccount bankAccountReciever = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountRecieverId) ?? throw new KeyNotFoundException();
-            if (!LocalValidator.IsActive(bankAccountReciever))
-            {
-                throw new InvalidOperationException();
-            }
-
             Credit currentCredit = _context.Set<Credit>().FirstOrDefault(cr => cr.Id == creditId && cr.ClientId == client.Id) ?? throw new KeyNotFoundException();
 
             // по уже одобренному кредиту нельзя перевести деньги дважды!
@@ -122,6 +124,14 @@ namespace BusinessLogicLayer.Services
             {
                 throw new InvalidOperationException();
             }
+
+            BankAccount bankAccountReciever = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountRecieverId && ba.BankId == currentCredit.BankId) ?? throw new KeyNotFoundException();
+            if (!LocalValidator.IsActive(bankAccountReciever))
+            {
+                throw new InvalidOperationException();
+            }
+
+            
             BankAccount masterBankAccount = GetMasterBankAccount(currentCredit);
 
             using (var _transaction = _context.Database.BeginTransaction())
@@ -181,10 +191,12 @@ namespace BusinessLogicLayer.Services
                         decimal montlyPayment = CalculateMontlyPayment(credit.LoanAmount, credit.LoanTerm, credit.LoanInterest);
                         
                         Client client = credit.Client;
-                        List<BankAccount> bankAccountsOfClientForWriteOff = _context.Set<BankAccount>().Where(ba => ba.ClientId == client.Id 
-                        && ba.Type == BankAccountType.Current 
-                        && ba.Status == BankAccountStatus.Active
-                        && ba.MoneyBalance >= montlyPayment).ToList();
+                        List<BankAccount> bankAccountsOfClientForWriteOff = _context.Set<BankAccount>().
+                            Where(ba => ba.ClientId == client.Id 
+                            && ba.Type == BankAccountType.Current 
+                            && ba.Status == BankAccountStatus.Active
+                            && ba.MoneyBalance >= montlyPayment
+                            && ba.BankId == credit.BankId).ToList();
 
                         if (bankAccountsOfClientForWriteOff is null)
                         {

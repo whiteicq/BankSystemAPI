@@ -24,8 +24,14 @@ namespace BusinessLogicLayer.Services
             _loggerService = loggerService;
         }
 
-        public Deposit RequestDeposit(long userId, decimal sumOfDeposit, int term, decimal interest)
+        public Deposit RequestDeposit(long userId, long bankId, decimal sumOfDeposit, int term, decimal interest)
         {
+            bool bankExists = _context.Set<Bank>().Any(b => b.Id == bankId);
+            if (!bankExists)
+            {
+                throw new InvalidDataException();
+            }
+
             if (sumOfDeposit <= 0)
             {
                 throw new ArgumentOutOfRangeException();
@@ -52,7 +58,8 @@ namespace BusinessLogicLayer.Services
                 DepositAmount = sumOfDeposit,
                 DepositTerm = term,
                 DepositInterest = interest,
-                Client = client
+                Client = client,
+                BankId = bankId
             };
 
             _context.Set<Deposit>().Add(deposit);
@@ -98,7 +105,8 @@ namespace BusinessLogicLayer.Services
                 Type = BankAccountType.Deposit,
                 Status = BankAccountStatus.Active,
                 Client = client,
-                Deposit = currentDeposit
+                Deposit = currentDeposit,
+                Bank = currentDeposit.Bank
             };
 
             _context.Set<BankAccount>().Add(depositBankAccount);
@@ -115,16 +123,16 @@ namespace BusinessLogicLayer.Services
                 throw new InvalidOperationException();
             }
 
-            BankAccount bankAccountSender = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountSenderId) ?? throw new KeyNotFoundException();
-            if (!LocalValidator.IsActive(bankAccountSender))
-            {
-                throw new InvalidOperationException();
-            }
-
             Deposit currentDeposit = _context.Set<Deposit>().FirstOrDefault(dp => dp.Id == depositId && dp.Client.Id == clientId) ?? throw new KeyNotFoundException();
 
             // по уже одобренного депозита нельзя перевести деньги дважды!
             if (LocalValidator.IsActive(currentDeposit))
+            {
+                throw new InvalidOperationException();
+            }
+
+            BankAccount bankAccountSender = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountSenderId && ba.BankId == currentDeposit.BankId) ?? throw new KeyNotFoundException();
+            if (!LocalValidator.IsActive(bankAccountSender))
             {
                 throw new InvalidOperationException();
             }
@@ -178,7 +186,7 @@ namespace BusinessLogicLayer.Services
                         _transactionService.SystemTransferMoney(monthlyAccrual, masterBankAccount.Id, deposit.BankAccount.Id);
                         if (DateTime.Today.Year == deposit.OpenedAt.Year)
                         {
-                            BankAccount bankAccount = _context.Set<BankAccount>().First(ba => ba.ClientId == deposit.Client.Id && ba.Status == BankAccountStatus.Active && ba.Type == BankAccountType.Current);
+                            BankAccount bankAccount = _context.Set<BankAccount>().First(ba => ba.ClientId == deposit.Client.Id && ba.Status == BankAccountStatus.Active && ba.Type == BankAccountType.Current && ba.BankId == deposit.BankId);
                             
                             // если срок вклада закончился, перевод средств клиенту 
                             _transactionService.SystemTransferMoney(deposit.BankAccount.MoneyBalance, deposit.BankAccount.Id, bankAccount.Id);

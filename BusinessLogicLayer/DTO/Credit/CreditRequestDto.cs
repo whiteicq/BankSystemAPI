@@ -10,5 +10,6 @@ namespace BusinessLogicLayer.DTO.Credit
         public decimal SumOfLoan { get; set; }
         public int Term { get; set; }
         public decimal Interest { get; set; }
+        public long BankId { get; set; }
     }
 }
