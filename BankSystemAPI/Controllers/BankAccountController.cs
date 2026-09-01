@@ -46,7 +46,7 @@ namespace BankSystemAPI.Controllers
         }
 
         [HttpPatch("close")]
-        public IActionResult CloseBankAccount(string bankAccountNumber)
+        public IActionResult CloseBankAccount(long bankAccountId)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim))
@@ -56,7 +56,7 @@ namespace BankSystemAPI.Controllers
 
             long currentUserId = long.Parse(userIdClaim);
 
-            _bankAccountService.CloseBankAccount(currentUserId, bankAccountNumber);
+            _bankAccountService.CloseBankAccount(currentUserId, bankAccountId);
 
             return Ok();
         }

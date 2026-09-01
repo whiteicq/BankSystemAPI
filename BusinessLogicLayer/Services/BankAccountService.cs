@@ -22,11 +22,11 @@ namespace BusinessLogicLayer.Services
             _loggerService = loggerService;
         }
 
-        public void CloseBankAccount(long userId, string bankAccountNumber)
+        public void CloseBankAccount(long userId, long bankAccountId)
         {
             Client client = _context.Set<Client>().Include(cl => cl.BankAccounts).FirstOrDefault(cl => cl.UserId == userId) ?? throw new KeyNotFoundException();
 
-            BankAccount bankAccountToClose = client.BankAccounts.FirstOrDefault(ba => ba.BankAccountNumber == bankAccountNumber) ?? throw new InvalidOperationException();
+            BankAccount bankAccountToClose = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountId) ?? throw new InvalidOperationException();
             
             if (!LocalValidator.IsActive(bankAccountToClose))
             {
@@ -85,7 +85,7 @@ namespace BusinessLogicLayer.Services
             }
 
             Client client = _context.Set<Client>().FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFound($"{nameof(client)} is null");
-            if (LocalValidator.IsActive(client))
+            if (!LocalValidator.IsActive(client))
             {
                 throw new InvalidStatus();
             }
@@ -95,7 +95,8 @@ namespace BusinessLogicLayer.Services
                 BankAccountNumber = GenerateUniqueBankAccountNumber(28),
                 Type = bankAccountType,
                 Client = client,
-                BankId = bankId
+                BankId = bankId,
+                OpenedAt = DateOnly.FromDateTime(DateTime.UtcNow)
             };
 
             _context.Set<BankAccount>().Add(newBankAccount);

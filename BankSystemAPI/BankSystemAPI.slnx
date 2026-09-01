@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="../BankSystemAPI.Tests/BankSystemAPI.Tests.csproj" Id="6cf38079-7794-4e74-aca6-ced72afffcbf" />
   <Project Path="../BusinessLogicLayer/BusinessLogicLayer.csproj" Id="16c501b9-7f3f-4586-89aa-81e94c1d3dbe" />
   <Project Path="../DataAccessLayer/DataAccessLayer.csproj" Id="be2b871d-f611-48a3-93f8-6d7ab1b4824a" />
   <Project Path="BankSystemAPI.csproj" />

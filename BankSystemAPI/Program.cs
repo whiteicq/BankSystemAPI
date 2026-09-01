@@ -7,7 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi;
-using Swashbuckle.AspNetCore;
+using BusinessLogicLayer.Interfaces;
+using BusinessLogicLayer.Services;
+using System.Diagnostics.Eventing.Reader;
 
 namespace BankSystemAPI
 {
@@ -17,13 +19,23 @@ namespace BankSystemAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IBankAccountService, BankAccountService>();
+            builder.Services.AddScoped<ICreditService, CreditService>();
+            builder.Services.AddScoped<IDepositService, DepositService>();
+            builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+            builder.Services.AddScoped<ILoggerService, LoggerService>();
+            builder.Services.AddScoped<ITokenService, TokenService>();
+            builder.Services.AddScoped<ITransactionService, TransactionService>();
+
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddDbContext<BankDbContext>(options =>
             {
                 options.UseSqlServer(connectionString);
 
                 // options.UseLazyLoadingProxies();
             });
+            builder.Services.AddScoped<DbContext, BankDbContext>();
 
             builder.Services.AddIdentity<ApplicationUser, IdentityRole<long>>(options =>
             {
@@ -112,6 +124,21 @@ namespace BankSystemAPI
             
 
             app.MapControllers();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<long>>>();
+                string[] roleNames = { "Admin", "Client", "Employee" };
+
+                foreach (var roleName in roleNames)
+                {
+                    if (!await roleManager.RoleExistsAsync(roleName))
+                    {
+                        await roleManager.CreateAsync(new IdentityRole<long>(roleName));
+                    }
+                }
+            }
+
 
             app.Run();
         }

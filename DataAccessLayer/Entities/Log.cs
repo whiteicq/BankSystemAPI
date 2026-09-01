@@ -7,7 +7,7 @@ public partial class Log
 {
     public long Id { get; set; }
 
-    [MaxLength(20)]
+    [MaxLength(40)]
     public OperationType TypeOperation { get; set; }
 
     [MaxLength(30)]
@@ -15,6 +15,7 @@ public partial class Log
 
     public long TargetRowId { get; set; }
     [MaxLength(45)]
+
     public string? OldValue { get; set; }
     [MaxLength(45)]
     public string? NewValue { get; set; }

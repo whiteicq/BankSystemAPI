@@ -3,6 +3,7 @@ using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using DataAccessLayer.Enums.Logs;
+using Microsoft.EntityFrameworkCore.Storage;
 namespace BusinessLogicLayer.Services
 {
     public class AuthService : IAuthService
@@ -28,9 +29,12 @@ namespace BusinessLogicLayer.Services
             {
                 try
                 {
+                    var dbTransaction = _transaction.GetDbTransaction();
+                    await _context.Database.UseTransactionAsync(dbTransaction);
+
                     ApplicationUser user = new ApplicationUser
                     {
-                        UserName = $"{surname} {name} {patronymic}".Trim(),
+                        UserName = $"{surname}_{name}_{patronymic}".Trim(),
                         PhoneNumber = phoneNumber,
                         Email = email
                     };
@@ -40,7 +44,7 @@ namespace BusinessLogicLayer.Services
                     {
                         throw new Exception("Не удалось создать пользователя");
                     }
-
+                    
                     await _userManager.AddToRoleAsync(user, "Client");
 
                     Passport passport = new Passport
@@ -51,7 +55,7 @@ namespace BusinessLogicLayer.Services
                     };
 
                     _context.Set<Passport>().Add(passport);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
 
                     var clientProfile = new Client
                     {
@@ -74,7 +78,7 @@ namespace BusinessLogicLayer.Services
                 }
                 catch
                 {
-                    _transaction.Rollback();
+                    await _transaction.RollbackAsync();
                     throw;
                 }
             }
@@ -88,7 +92,7 @@ namespace BusinessLogicLayer.Services
                 {
                     ApplicationUser user = new ApplicationUser
                     {
-                        UserName = $"{surname} {name} {patronymic}".Trim(),
+                        UserName = $"{surname}_{name}_{patronymic}".Trim(),
                         Email = email
                     };
 

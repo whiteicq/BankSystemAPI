@@ -119,7 +119,7 @@ public class BankDbContext : IdentityDbContext<ApplicationUser,
             bankAccount.Property(ba => ba.Status).HasConversion<string>();
             bankAccount.Property(ba => ba.Type).HasConversion<string>();
             bankAccount.Property(ba => ba.MoneyBalance).HasColumnType("decimal(18, 4)");
-            bankAccount.Property(ba => ba.OpenedAt).HasDefaultValueSql("CAST(GETUTCDATE() AS DATE)");
+            bankAccount.Property(ba => ba.OpenedAt).HasDefaultValueSql("CAST(GETUTCDATE() AS DATE)").ValueGeneratedOnAdd();
 
             bankAccount
                 .HasOne(ba => ba.Bank)
