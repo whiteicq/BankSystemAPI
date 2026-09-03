@@ -1,0 +1,22 @@
+﻿namespace DataAccessLayer.Enums.Logs
+{
+    public enum OperationType
+    {
+        CLIENT_ADDED,
+        CLIENT_ACTIVATED,
+        CLIENT_BLOCKED,
+        BANK_ACCOUNT_CLOSED,
+        BANK_ACCOUNT_OPENED,
+        BANK_ACCOUNT_ACTIVATED,
+        BANK_ACCOUNT_BLOCKED,
+        BANK_ACCOUNT_FROZEN,
+        CREDIT_APPROVED,
+        CREDIT_REJECTED,
+        CREDIT_REQUESTED,
+        DEPOSIT_APPROVED,
+        DEPOSIT_REQUESTED,
+        DEPOSIT_REJECTED,
+        TRANSACTION_CANCELED,
+        TRANSACTION_COMPLETED
+    }
+}
