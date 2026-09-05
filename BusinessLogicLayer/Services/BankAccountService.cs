@@ -1,10 +1,14 @@
-﻿using BusinessLogicLayer.Exceptions.Client;
+﻿using BusinessLogicLayer.Exceptions.BankAccount;
+using BusinessLogicLayer.Exceptions.Client;
+using BusinessLogicLayer.Exceptions.Bank;
 using BusinessLogicLayer.Infrastructure;
 using BusinessLogicLayer.Interfaces;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Enums.BankAccount;
-using Microsoft.EntityFrameworkCore;
+using DataAccessLayer.Enums.Client;
 using DataAccessLayer.Enums.Logs;
+using Microsoft.AspNetCore.Connections.Features;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -24,23 +28,26 @@ namespace BusinessLogicLayer.Services
 
         public void CloseBankAccount(long userId, long bankAccountId)
         {
-            Client client = _context.Set<Client>().Include(cl => cl.BankAccounts).FirstOrDefault(cl => cl.UserId == userId) ?? throw new KeyNotFoundException();
-
-            BankAccount bankAccountToClose = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountId) ?? throw new InvalidOperationException();
+            Client client = _context.Set<Client>().Include(cl => cl.BankAccounts).FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFoundException($"Entity of {nameof(Client)} with {nameof(Client.UserId)} = {userId} is not found");
+            if (!LocalValidator.IsActive(client))
+            {
+                throw new InvalidClientStatusException($"Cannot close bank account of unactive client. The value of {nameof(ClientStatus)} must be {ClientStatus.Active}");
+            }
+            BankAccount bankAccountToClose = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} with {nameof(BankAccount.Id)} = {bankAccountId} is not found");
             
             if (!LocalValidator.IsActive(bankAccountToClose))
             {
-                throw new InvalidOperationException("Невозможно закрыть неактивный счет");
+                throw new InvalidBankAccountStatusException($"Cannot close an unactive bank account. The value of {nameof(BankAccountStatus)} must be {BankAccountStatus.Active}");
             }
 
             if (bankAccountToClose.MoneyBalance > 0)
             {
-                throw new InvalidOperationException("Невозможно закрыть счет со средствами на балансе");
+                throw new InvalidOperationException("It is impossible to close an account with funds in the balance");
             }
 
             if (bankAccountToClose.MoneyBalance < 0)
             {
-                throw new InvalidOperationException("Невозможно закрыть счет с задолженностью на балансе");
+                throw new InvalidOperationException("It is impossible to close an account with a debt on the balance");
             }
 
             bankAccountToClose.Status = BankAccountStatus.Closed;
@@ -52,21 +59,21 @@ namespace BusinessLogicLayer.Services
         
         public void SystemCloseBankAccount(long bankAccountId)
         {
-            BankAccount bankAccountToClose = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new InvalidOperationException();
+            BankAccount bankAccountToClose = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} with {nameof(BankAccount.Id)} = {bankAccountId} is not found");
 
             if (!LocalValidator.IsActive(bankAccountToClose))
             {
-                throw new InvalidOperationException("Невозможно закрыть неактивный счет");
+                throw new InvalidBankAccountStatusException($"Cannot close an unactive bank account. The value of {nameof(BankAccountStatus)} must be {BankAccountStatus.Active}");
             }
 
             if (bankAccountToClose.MoneyBalance > 0)
             {
-                throw new InvalidOperationException("Невозможно закрыть счет со средствами на балансе");
+                throw new ArgumentOutOfRangeException($"It is impossible to close an account with funds in the {nameof(bankAccountToClose.MoneyBalance)}. Value of {nameof(bankAccountToClose.MoneyBalance)} must be equal 0");
             }
 
             if (bankAccountToClose.MoneyBalance < 0)
             {
-                throw new InvalidOperationException("Невозможно закрыть счет с задолженностью на балансе");
+                throw new ArgumentOutOfRangeException($"It is impossible to close an account with a debt on the {nameof(bankAccountToClose.MoneyBalance)}. Value of {nameof(bankAccountToClose.MoneyBalance)} must be equal 0");
             }
 
             bankAccountToClose.Status = BankAccountStatus.Closed;
@@ -81,13 +88,13 @@ namespace BusinessLogicLayer.Services
             bool bankExists = _context.Set<Bank>().Any(b => b.Id == bankId);
             if (!bankExists)
             {
-                throw new InvalidDataException();
+                throw new BankNotFoundException($"Entity of {nameof(Bank)} with {nameof(Bank.Id)} = {bankId} is not found");
             }
 
-            Client client = _context.Set<Client>().FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFound($"{nameof(client)} is null");
+            Client client = _context.Set<Client>().FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFoundException($"Entity of {nameof(Client)} with {nameof(Client.UserId)} = {userId} is not found");
             if (!LocalValidator.IsActive(client))
             {
-                throw new InvalidStatus();
+                throw new InvalidClientStatusException($"Cannot open a bank account for unactive client. The value of {nameof(ClientStatus)} must be {ClientStatus.Active}");
             }
 
             BankAccount newBankAccount = new BankAccount()
@@ -110,6 +117,11 @@ namespace BusinessLogicLayer.Services
 
         public string GenerateUniqueBankAccountNumber(int length)
         {
+            if (length < 0)
+            {
+                return string.Empty;
+            }
+
             string uniquebankAccountNumber = string.Empty;
             bool isDublicate;
 

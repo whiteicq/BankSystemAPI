@@ -16,4 +16,8 @@
     <ProjectReference Include="..\DataAccessLayer\DataAccessLayer.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Exceptions\Deposit\" />
+  </ItemGroup>
+
 </Project>

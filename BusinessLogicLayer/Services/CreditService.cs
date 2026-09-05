@@ -1,12 +1,17 @@
-﻿  using DataAccessLayer.Enums.FinancialProduct.Credit;
-using BusinessLogicLayer.Exceptions.Client;
+﻿using BusinessLogicLayer.Exceptions.Client;
+using BusinessLogicLayer.Exceptions.Bank;
+using BusinessLogicLayer.Exceptions.Credit;
+using BusinessLogicLayer.Infrastructure;
 using BusinessLogicLayer.Interfaces;
 using DataAccessLayer.Entities;
-using Microsoft.EntityFrameworkCore;
 using DataAccessLayer.Enums.BankAccount;
-using BusinessLogicLayer.Infrastructure;
-using DataAccessLayer.Enums.Transaction;
+using DataAccessLayer.Enums.Client;
+using DataAccessLayer.Enums.FinancialProduct.Credit;
 using DataAccessLayer.Enums.Logs;
+using DataAccessLayer.Enums.Transaction;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Connections.Features;
+using BusinessLogicLayer.Exceptions.BankAccount;
 
 namespace BusinessLogicLayer.Services
 {
@@ -31,29 +36,29 @@ namespace BusinessLogicLayer.Services
             bool bankExists = _context.Set<Bank>().Any(b => b.Id == bankId);
             if (!bankExists)
             {
-                throw new InvalidDataException();
+                throw new BankNotFoundException($"Entity of {nameof(Bank)} with {nameof(Bank.Id)} = {bankId} is not found");
             }   
 
             if (sumOfLoan <= 0)
             {
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException($"It is not possible to apply for a loan with a negative {nameof(sumOfLoan)}. Value of {nameof(sumOfLoan)} must be positive");
             }
 
             if (term <= 0)
             {
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException($"It is not possible to apply for a loan for a negative {nameof(term)}. Value of {nameof(term)} must be positive");
             }
 
             if (interest <= 14 || interest >= 25)
             {
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException($"It is not possible to apply for a loan with a invalid value of {nameof(interest)}. Value of {nameof(interest)} must be in range of [14..25]");
             }
 
-            Client client = _context.Set<Client>().FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFound("");
+            Client client = _context.Set<Client>().FirstOrDefault(cl => cl.UserId == userId) ?? throw new ClientNotFoundException($"Entity of {nameof(Client)} with {nameof(Client.UserId)} = {userId} is not found");
 
             if (!LocalValidator.IsActive(client))
             {
-                throw new InvalidOperationException();
+                throw new InvalidClientStatusException($"Cannot apply for a loan for unactive client. The value of {nameof(ClientStatus)} must be {ClientStatus.Active}");
             }
 
             decimal totalLoanBalance = CalculateMontlyPayment(sumOfLoan, term, interest) * term;
@@ -81,16 +86,16 @@ namespace BusinessLogicLayer.Services
         // открытие кредитного счета после одобрения
         private void OpenCreditBankAccount(long clientId, long creditId)
         {
-            Client client = _context.Set<Client>().Include(cl => cl.Credits).FirstOrDefault(cl => cl.Id == clientId) ?? throw new ClientNotFound("");
+            Client client = _context.Set<Client>().Include(cl => cl.Credits).FirstOrDefault(cl => cl.Id == clientId) ?? throw new ClientNotFoundException($"Entity of {nameof(Client)} with {nameof(Client.Id)} = {clientId} is not found");
             if (!LocalValidator.IsActive(client))
             {
-                throw new InvalidOperationException();
+                throw new InvalidClientStatusException($"Cannot open credit for unactive client. The value of {nameof(ClientStatus)} must be {ClientStatus.Active}");
             }
 
-            Credit currentCredit = client.Credits.FirstOrDefault(cr => cr.Id == creditId) ?? throw new KeyNotFoundException();
+            Credit currentCredit = client.Credits.FirstOrDefault(cr => cr.Id == creditId) ?? throw new CreditNotFoundException($"Entity of {nameof(Credit)} with {nameof(Credit.Id)} = {creditId} is not found");
             if (!LocalValidator.IsActive(currentCredit))
             {
-                throw new InvalidOperationException();
+                throw new InvalidCreditStatusException($"Cannot create credit bank account for unactive credit. The value of {nameof(CreditStatus)} must be {CreditStatus.Active}");
             }
 
             BankAccount creditBankAccount = new BankAccount
@@ -111,24 +116,24 @@ namespace BusinessLogicLayer.Services
         // перевод денег по кредиту в случае одобрения кредита (ВЫЗЫВАТЬ СОТРУДНИКОМ ПРИ ОДОБРЕНИИ!)
         public void TransferMoneyForLoan(long clientId, long creditId, long bankAccountRecieverId)
         {
-            Client client = _context.Set<Client>().Include(cl => cl.BankAccounts).FirstOrDefault(cl => cl.Id == clientId) ?? throw new ClientNotFound("");
+            Client client = _context.Set<Client>().Include(cl => cl.BankAccounts).FirstOrDefault(cl => cl.Id == clientId) ?? throw new ClientNotFoundException($"Entity of {nameof(Client)} with {nameof(Client.Id)} = {clientId} is not found");
             if (!LocalValidator.IsActive(client))
             {
-                throw new InvalidOperationException();
+                throw new InvalidClientStatusException($"Cannot transef money on loan for unactive client. The value of {nameof(ClientStatus)} must be {ClientStatus.Active}");
             }
 
-            Credit currentCredit = _context.Set<Credit>().FirstOrDefault(cr => cr.Id == creditId && cr.ClientId == client.Id) ?? throw new KeyNotFoundException();
+            Credit currentCredit = _context.Set<Credit>().FirstOrDefault(cr => cr.Id == creditId && cr.ClientId == client.Id) ?? throw new CreditNotFoundException($"Entity of {nameof(Credit)} with {nameof(Credit.Id)} = {creditId} & {nameof(Client.Id)} = {clientId} is not found");
 
             // по уже одобренному кредиту нельзя перевести деньги дважды!
             if (LocalValidator.IsActive(currentCredit))
             {
-                throw new InvalidOperationException();
+                throw new InvalidCreditStatusException("Cannot transfer money on loan twice");
             }
 
-            BankAccount bankAccountReciever = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountRecieverId && ba.BankId == currentCredit.BankId) ?? throw new KeyNotFoundException();
+            BankAccount bankAccountReciever = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountRecieverId && ba.BankId == currentCredit.BankId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} is not found");
             if (!LocalValidator.IsActive(bankAccountReciever))
             {
-                throw new InvalidOperationException();
+                throw new InvalidBankAccountStatusException($"Cannot transfer money on unactive bank account. The value of {nameof(BankAccountStatus)} must be {BankAccountStatus.Active}");
             }
 
             
