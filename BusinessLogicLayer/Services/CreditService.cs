@@ -10,7 +10,6 @@ using DataAccessLayer.Enums.FinancialProduct.Credit;
 using DataAccessLayer.Enums.Logs;
 using DataAccessLayer.Enums.Transaction;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Connections.Features;
 using BusinessLogicLayer.Exceptions.BankAccount;
 
 namespace BusinessLogicLayer.Services
@@ -161,7 +160,7 @@ namespace BusinessLogicLayer.Services
 
         private BankAccount GetMasterBankAccount(Credit currentCredit)
         {
-            BankAccount masterBankAccount = _context.Set<BankAccount>().FirstOrDefault(ba => ba.BankId == currentCredit.BankId && ba.ClientId == null) ?? throw new KeyNotFoundException();
+            BankAccount masterBankAccount = _context.Set<BankAccount>().FirstOrDefault(ba => ba.BankId == currentCredit.BankId && ba.ClientId == null) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} which belong to {nameof(Credit)} with {nameof(Credit.Id)} = {currentCredit.Id} is not found");
 
             return masterBankAccount;
         }
@@ -216,7 +215,7 @@ namespace BusinessLogicLayer.Services
 
                         _transactionService.SystemTransferMoney(montlyPayment, currentBankAccount.Id, masterBankAccount.Id, TransactionType.Credit, credit.Currency);
 
-                        BankAccount? creditBankAccount = _context.Set<BankAccount>().FirstOrDefault(ba => ba.Id == credit.BankAccountId) ?? throw new KeyNotFoundException();
+                        BankAccount? creditBankAccount = _context.Set<BankAccount>().FirstOrDefault(ba => ba.Id == credit.BankAccountId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} which belong to {nameof(Credit)} with {nameof(BankAccount.Id)} = {credit.BankAccountId} is not found");
                         credit.LoanBalance -= montlyPayment;
                         creditBankAccount.MoneyBalance -= montlyPayment;
                         if (creditBankAccount.MoneyBalance >= 0 || credit.LoanBalance <= 0)

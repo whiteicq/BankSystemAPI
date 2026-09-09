@@ -5,10 +5,14 @@ using DataAccessLayer.Enums.Client;
 using DataAccessLayer.Enums.FinancialProduct.Deposit;
 using Microsoft.EntityFrameworkCore;
 using BusinessLogicLayer.Exceptions.Client;
+using BusinessLogicLayer.Exceptions.BankAccount;
+using BusinessLogicLayer.Exceptions.Transaction;
+using BusinessLogicLayer.Exceptions.Deposit;
 using DataAccessLayer.Enums.FinancialProduct.Credit;
 using DataAccessLayer.Enums.Transaction;
 using BusinessLogicLayer.Infrastructure;
 using DataAccessLayer.Enums.Logs;
+using BusinessLogicLayer.Exceptions.Credit;
 
 namespace BusinessLogicLayer.Services
 {
@@ -31,7 +35,7 @@ namespace BusinessLogicLayer.Services
 
         public void ActivateClient(long clientId)
         {
-            Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFound("");
+            Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFoundException($"Entity of {nameof(Client)} with {nameof(Client.Id)} = {clientId} is not found");
             if (LocalValidator.IsActive(client))
             {
                 return;
@@ -48,7 +52,7 @@ namespace BusinessLogicLayer.Services
 
         public void ActivateBankAccount(long bankAccountId)
         {
-            BankAccount bankAccount = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new KeyNotFoundException();
+            BankAccount bankAccount = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} with {nameof(BankAccount.Id)} = {bankAccountId} is not found");
             if (LocalValidator.IsActive(bankAccount))
             {
                 return;
@@ -79,7 +83,7 @@ namespace BusinessLogicLayer.Services
 
         public void BlockBankAccount(long bankAccountId)
         {
-            BankAccount bankAccount = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new KeyNotFoundException();
+            BankAccount bankAccount = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} with {nameof(BankAccount.Id)} = {bankAccountId} is not found");
             if (bankAccount.Status == BankAccountStatus.Blocked)
             {
                 return;
@@ -95,7 +99,7 @@ namespace BusinessLogicLayer.Services
 
         public void BlockClient(long clientId)
         {
-            Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFound("");
+            Client client = _context.Set<Client>().Find(clientId) ?? throw new ClientNotFoundException($"Entity of {nameof(Client)} with {nameof(Client.Id)} = {clientId} is not found");
             if (client.Status == ClientStatus.Blocked)
             {
                 return;
@@ -113,9 +117,9 @@ namespace BusinessLogicLayer.Services
             Transaction transaction = _context.Set<Transaction>()
                 .Include(tr => tr.Sender)
                 .Include(tr => tr.Receiver)
-                .FirstOrDefault(tr => tr.Id == transactionId 
-                && tr.Status == TransactionStatus.Confirmed) ?? throw new KeyNotFoundException();
-           
+                .FirstOrDefault(tr => tr.Id == transactionId
+                && tr.Status == TransactionStatus.Confirmed) ?? throw new TransactionNotFoundException($"Entity of {nameof(Transaction)} with {nameof(Transaction.Id)} = {transactionId} and {nameof(Transaction.Status)} = {TransactionStatus.Confirmed} is not found");
+
             BankAccount sender = transaction.Sender;
             BankAccount receiver = transaction.Receiver;
             decimal transactionAmount = transaction.TransactionAmount;
@@ -149,7 +153,7 @@ namespace BusinessLogicLayer.Services
 
         public void FreezeBankAccount(long bankAccountId)
         {
-            BankAccount bankAccount = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new KeyNotFoundException();
+            BankAccount bankAccount = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} with {nameof(BankAccount.Id)} = {bankAccountId} is not found");
             if (!LocalValidator.IsActive(bankAccount))
             {
                 return;
@@ -165,7 +169,7 @@ namespace BusinessLogicLayer.Services
 
         public void RejectCredit(long creditId)
         {
-            Credit credit = _context.Set<Credit>().FirstOrDefault(cr => cr.Id == creditId && cr.Status == CreditStatus.Active) ?? throw new KeyNotFoundException();
+            Credit credit = _context.Set<Credit>().FirstOrDefault(cr => cr.Id == creditId && cr.Status == CreditStatus.Active) ?? throw new CreditNotFoundException($"Entity of {nameof(Credit)} with {nameof(Credit.Id)} = {creditId} and {nameof(CreditStatus)} = {CreditStatus.Active} is not found");
             credit.Status = CreditStatus.Rejected;
 
             _context.SaveChanges();
@@ -175,7 +179,7 @@ namespace BusinessLogicLayer.Services
 
         public void RejectDeposit(long depositId)
         {
-            Deposit deposit = _context.Set<Deposit>().FirstOrDefault(dp => dp.Id == depositId && dp.Status == DepositStatus.Active) ?? throw new KeyNotFoundException();
+            Deposit deposit = _context.Set<Deposit>().FirstOrDefault(dp => dp.Id == depositId && dp.Status == DepositStatus.Active) ?? throw new DepositNotFoundException($"Entity of {nameof(Deposit)} with {nameof(Deposit.Id)} = {depositId} and {nameof(DepositStatus)} = {DepositStatus.Active} is not found");
             deposit.Status = DepositStatus.Rejected;
 
             _context.SaveChanges();

@@ -1,5 +1,6 @@
 ﻿using BusinessLogicLayer.Interfaces;
 using BusinessLogicLayer.Services;
+using BusinessLogicLayer.Exceptions.BankAccount;
 using DataAccessLayer.Database;
 using DataAccessLayer.Entities;
 using DataAccessLayer.Enums.BankAccount;
@@ -140,7 +141,7 @@ namespace BankSystemAPI.Tests
 
             // Act
             // Assert
-            Assert.Throws<InvalidStatus>(() => _service.OpenBankAccount(client.UserId, bank.Id));
+            Assert.Throws<InvalidBankAccountStatusException>(() => _service.OpenBankAccount(client.UserId, bank.Id));
 
             _loggerMock.Verify(m => m.MakeLog(
                 It.IsAny<OperationType>(),
@@ -198,7 +199,7 @@ namespace BankSystemAPI.Tests
 
             // Act
             // Assert
-            Assert.Throws<ClientNotFound>(() => _service.CloseBankAccount(1, bankAccount.Id));
+            Assert.Throws<ClientNotFoundException>(() => _service.CloseBankAccount(1, bankAccount.Id));
             _loggerMock.Verify(m => m.MakeLog(
                 It.IsAny<OperationType>(),
                 It.IsAny<string>(),

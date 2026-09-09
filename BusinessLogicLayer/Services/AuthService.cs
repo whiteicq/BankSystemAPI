@@ -1,4 +1,5 @@
 ﻿using BusinessLogicLayer.Interfaces;
+using BusinessLogicLayer.Exceptions.Auth;
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -42,7 +43,7 @@ namespace BusinessLogicLayer.Services
                     var identityResult = await _userManager.CreateAsync(user, password);
                     if (!identityResult.Succeeded)
                     {
-                        throw new Exception("Не удалось создать пользователя");
+                        throw new UserRegistrationException("Failed to create user");
                     }
                     
                     await _userManager.AddToRoleAsync(user, "Client");
@@ -99,7 +100,7 @@ namespace BusinessLogicLayer.Services
                     var identityResult = await _userManager.CreateAsync(user, password);
                     if (!identityResult.Succeeded)
                     {
-                        throw new Exception("Не удалось создать пользователя");
+                        throw new UserRegistrationException("Failed to create user");
                     }
 
                     await _userManager.AddToRoleAsync(user, "Employee");
