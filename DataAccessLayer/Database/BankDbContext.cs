@@ -199,8 +199,6 @@ public class BankDbContext : IdentityDbContext<ApplicationUser,
         modelBuilder.Entity<Employee>(employee =>
         {
             employee.HasIndex(emp => emp.PhoneNumber, "UQ_employee_phone_number").IsUnique();
-            employee.HasIndex(emp => emp.PersonellNumber, "UQ_employee_personell_number").IsUnique();
-            employee.Property(emp => emp.PersonellNumber).IsFixedLength();
             employee.Property(emp => emp.PhoneNumber).IsFixedLength();
 
             employee.HasOne(emp => emp.Bank).WithMany(b => b.Employees)

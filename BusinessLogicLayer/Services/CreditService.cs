@@ -11,6 +11,7 @@ using DataAccessLayer.Enums.Logs;
 using DataAccessLayer.Enums.Transaction;
 using Microsoft.EntityFrameworkCore;
 using BusinessLogicLayer.Exceptions.BankAccount;
+using Microsoft.AspNetCore.Connections.Features;
 
 namespace BusinessLogicLayer.Services
 {
@@ -92,7 +93,7 @@ namespace BusinessLogicLayer.Services
             }
 
             Credit currentCredit = client.Credits.FirstOrDefault(cr => cr.Id == creditId) ?? throw new CreditNotFoundException($"Entity of {nameof(Credit)} with {nameof(Credit.Id)} = {creditId} is not found");
-            if (!LocalValidator.IsActive(currentCredit))
+            if (currentCredit.Status != CreditStatus.Unactivated)
             {
                 throw new InvalidCreditStatusException($"Cannot create credit bank account for unactive credit. The value of {nameof(CreditStatus)} must be {CreditStatus.Active}");
             }
@@ -105,7 +106,8 @@ namespace BusinessLogicLayer.Services
                 Status = BankAccountStatus.Active,
                 Client = client,
                 Credit = currentCredit,
-                Bank = currentCredit.Bank
+                Bank = currentCredit.Bank,
+                BankId = currentCredit.BankId
             };
 
             _context.Set<BankAccount>().Add(creditBankAccount);
@@ -123,10 +125,10 @@ namespace BusinessLogicLayer.Services
 
             Credit currentCredit = _context.Set<Credit>().FirstOrDefault(cr => cr.Id == creditId && cr.ClientId == client.Id) ?? throw new CreditNotFoundException($"Entity of {nameof(Credit)} with {nameof(Credit.Id)} = {creditId} & {nameof(Client.Id)} = {clientId} is not found");
 
-            // по уже одобренному кредиту нельзя перевести деньги дважды!
-            if (LocalValidator.IsActive(currentCredit))
+            // кредит должен быть неподтвержденным (его первичный статус)
+            if (currentCredit.Status != CreditStatus.Unactivated)
             {
-                throw new InvalidCreditStatusException("Cannot transfer money on loan twice");
+                throw new InvalidCreditStatusException($"{nameof(currentCredit.Status)} must be only {nameof(CreditStatus.Unactivated)}");
             }
 
             BankAccount bankAccountReciever = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountRecieverId && ba.BankId == currentCredit.BankId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} is not found");
@@ -155,7 +157,6 @@ namespace BusinessLogicLayer.Services
                     throw;
                 }
             }
-
         }
 
         private BankAccount GetMasterBankAccount(Credit currentCredit)
@@ -167,12 +168,12 @@ namespace BusinessLogicLayer.Services
 
         private decimal CalculateMontlyPayment(decimal loanAmount, int loanTerm, decimal loanInterest)
         {
-            loanInterest /= 100m / 12m;
+            decimal interest = loanInterest / 100m / 12m;
              
-            double powBase = (double)(1m + loanInterest);
+            double powBase = (double)(1m + interest);
             decimal powResult = (decimal)Math.Pow(powBase, loanTerm);
 
-            decimal montlyPayment = loanAmount * loanInterest * powResult / (powResult - 1);
+            decimal montlyPayment = loanAmount * interest * powResult / (powResult - 1);
 
             return Math.Round(montlyPayment, 2, MidpointRounding.ToEven);
         }

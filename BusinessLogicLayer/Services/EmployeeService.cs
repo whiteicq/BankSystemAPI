@@ -167,9 +167,10 @@ namespace BusinessLogicLayer.Services
             _loggerService.MakeLog(OperationType.BANK_ACCOUNT_FROZEN, nameof(BankAccount), bankAccountId, oldStatus, bankAccount.Status.ToString());
         }
 
+        // TODO: мб надо тогда и кредитный счет закрыть?
         public void RejectCredit(long creditId)
         {
-            Credit credit = _context.Set<Credit>().FirstOrDefault(cr => cr.Id == creditId && cr.Status == CreditStatus.Active) ?? throw new CreditNotFoundException($"Entity of {nameof(Credit)} with {nameof(Credit.Id)} = {creditId} and {nameof(CreditStatus)} = {CreditStatus.Active} is not found");
+            Credit credit = _context.Set<Credit>().FirstOrDefault(cr => cr.Id == creditId && cr.Status != CreditStatus.Closed && cr.Status != CreditStatus.Rejected) ?? throw new CreditNotFoundException($"Entity of {nameof(Credit)} with {nameof(Credit.Id)} = {creditId} and {nameof(CreditStatus)} = {CreditStatus.Active} is not found");
             credit.Status = CreditStatus.Rejected;
 
             _context.SaveChanges();

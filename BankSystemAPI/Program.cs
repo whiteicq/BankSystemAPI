@@ -9,7 +9,6 @@ using System.Text;
 using Microsoft.OpenApi;
 using BusinessLogicLayer.Interfaces;
 using BusinessLogicLayer.Services;
-using System.Diagnostics.Eventing.Reader;
 
 namespace BankSystemAPI
 {

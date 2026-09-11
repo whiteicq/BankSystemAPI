@@ -125,7 +125,7 @@ namespace BusinessLogicLayer.Services
                         PhoneNumber = phoneNumber,
                         Passport = passport,
                         HireDate = DateOnly.FromDateTime(DateTime.UtcNow),
-                        Role = "Operator",
+                        Role = "Operator"
                     };
 
                     _context.Set<Employee>().Add(employee);

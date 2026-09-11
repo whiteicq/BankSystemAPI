@@ -24,7 +24,7 @@ namespace BusinessLogicLayer.Services
             _loggerService = loggerService;
         }
 
-        public Transaction TransferMoney(long userId, decimal amount, string senderBankAccountNumber, string recieverBankAccountNumber, TransactionType type = TransactionType.PeerToPeer, CurrencyType currency = CurrencyType.BYN)
+        public Transaction TransferMoney(long userId, decimal amount, string senderBankAccountNumber, string recieverBankAccountNumber)
         {
             if (amount <= 0)
             {
@@ -66,8 +66,8 @@ namespace BusinessLogicLayer.Services
                         TransactionAmount = amount,
                         Sender = sender,
                         Receiver = reciever,
-                        Type = type,
-                        Currency = currency
+                        Type = TransactionType.PeerToPeer,
+                        Currency = CurrencyType.BYN
                     };
 
                     _context.Set<Transaction>().Add(transaction);

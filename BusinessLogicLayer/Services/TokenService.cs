@@ -25,7 +25,8 @@ namespace BusinessLogicLayer.Services
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email ?? string.Empty)
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -37,12 +38,14 @@ namespace BusinessLogicLayer.Services
             var keyString = _configuration["Jwt:Key"]!;
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var now = DateTime.UtcNow;
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(60),
+                notBefore: now,
+                expires: now.AddMinutes(60),
                 signingCredentials: creds
             );
 

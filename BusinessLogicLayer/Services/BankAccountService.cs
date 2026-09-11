@@ -40,14 +40,14 @@ namespace BusinessLogicLayer.Services
                 throw new InvalidBankAccountStatusException($"Cannot close an unactive bank account. The value of {nameof(BankAccountStatus)} must be {BankAccountStatus.Active}");
             }
 
-            if (bankAccountToClose.MoneyBalance > 0)
+            if (bankAccountToClose.MoneyBalance > 0m)
             {
-                throw new InvalidOperationException("It is impossible to close an account with funds in the balance");
+                throw new ArgumentOutOfRangeException("It is impossible to close an account with funds in the balance");
             }
 
-            if (bankAccountToClose.MoneyBalance < 0)
+            if (bankAccountToClose.MoneyBalance < 0m)
             {
-                throw new InvalidOperationException("It is impossible to close an account with a debt on the balance");
+                throw new ArgumentOutOfRangeException   ("It is impossible to close an account with a debt on the balance");
             }
 
             bankAccountToClose.Status = BankAccountStatus.Closed;
@@ -60,18 +60,18 @@ namespace BusinessLogicLayer.Services
         public void SystemCloseBankAccount(long bankAccountId)
         {
             BankAccount bankAccountToClose = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} with {nameof(BankAccount.Id)} = {bankAccountId} is not found");
-
+            // TODO: для системного закрытия, сделать автопереключение статуса в валидный для закрытия (или вообще убрать это правило и закрывать счета с любым статусом)
             if (!LocalValidator.IsActive(bankAccountToClose))
             {
                 throw new InvalidBankAccountStatusException($"Cannot close an unactive bank account. The value of {nameof(BankAccountStatus)} must be {BankAccountStatus.Active}");
             }
 
-            if (bankAccountToClose.MoneyBalance > 0)
+            if (bankAccountToClose.MoneyBalance > 0m)
             {
                 throw new ArgumentOutOfRangeException($"It is impossible to close an account with funds in the {nameof(bankAccountToClose.MoneyBalance)}. Value of {nameof(bankAccountToClose.MoneyBalance)} must be equal 0");
             }
 
-            if (bankAccountToClose.MoneyBalance < 0)
+            if (bankAccountToClose.MoneyBalance < 0m)
             {
                 throw new ArgumentOutOfRangeException($"It is impossible to close an account with a debt on the {nameof(bankAccountToClose.MoneyBalance)}. Value of {nameof(bankAccountToClose.MoneyBalance)} must be equal 0");
             }

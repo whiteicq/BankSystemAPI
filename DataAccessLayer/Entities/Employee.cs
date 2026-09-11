@@ -27,9 +27,6 @@ public partial class Employee
 
     public DateOnly HireDate { get; set; }
 
-    [MaxLength(10)]
-    public string PersonellNumber { get; set; } = null!;
-
     public long? PassportId { get; set; }
 
     public long BankId { get; set; }
