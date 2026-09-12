@@ -53,7 +53,7 @@ namespace BusinessLogicLayer.Services
         public void ActivateBankAccount(long bankAccountId)
         {
             BankAccount bankAccount = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} with {nameof(BankAccount.Id)} = {bankAccountId} is not found");
-            if (LocalValidator.IsActive(bankAccount))
+            if (bankAccount.Status != BankAccountStatus.Unactivated || bankAccount.Status != BankAccountStatus.Frozen)
             {
                 return;
             }

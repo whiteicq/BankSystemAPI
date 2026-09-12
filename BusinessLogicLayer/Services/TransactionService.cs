@@ -65,7 +65,9 @@ namespace BusinessLogicLayer.Services
                     {
                         TransactionAmount = amount,
                         Sender = sender,
+                        SenderId = sender.Id,
                         Receiver = reciever,
+                        ReceiverId = reciever.Id,
                         Type = TransactionType.PeerToPeer,
                         Currency = CurrencyType.BYN
                     };
@@ -102,7 +104,7 @@ namespace BusinessLogicLayer.Services
                 throw new ArgumentOutOfRangeException($"{nameof(amount)} is negative. {nameof(amount)} must be more than 0");
             }
 
-            BankAccount sender = _context.Set<BankAccount>().FirstOrDefault(ba => ba.Id == senderBankAccountId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} with {nameof(BankAccount.Id)} = {senderBankAccountId} is not found");
+            BankAccount sender = _context.Set<BankAccount>().FirstOrDefault(ba => ba.Id == senderBankAccountId && ba.Type == BankAccountType.Current) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} with {nameof(BankAccount.Id)} = {senderBankAccountId} is not found");
 
             if (sender.MoneyBalance < amount)
             {

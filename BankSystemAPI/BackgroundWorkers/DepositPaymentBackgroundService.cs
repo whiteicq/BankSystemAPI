@@ -26,10 +26,23 @@ namespace BankSystemAPI.BackgroundWorkers
                 var nextRun = DateTime.Today.AddDays(1).AddMinutes(1);
                 var delay = nextRun - now;
 
+                if (delay <= TimeSpan.Zero)
+                {
+                    delay = TimeSpan.FromSeconds(1);
+                }
+
                 _logger.LogInformation($"Следующее автоматическое начисление произойдет через: {delay}");
 
-                // воркер засыпает в отдельном потоке до наступления полуночи
-                await Task.Delay(delay, stoppingToken);
+                try
+                {
+                    // воркер засыпает в отдельном потоке до наступления полуночи
+                    await Task.Delay(delay, stoppingToken);
+                }
+                catch(OperationCanceledException)
+                {
+                    _logger.LogInformation("Фоновая задача начисления процентов останавливается...");
+                    break;
+                }
 
                 _logger.LogInformation("Полночь наступила. Запуск процедуры ежедневных начислений по вкладам...");
 

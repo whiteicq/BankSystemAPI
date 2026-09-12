@@ -131,7 +131,7 @@ namespace BusinessLogicLayer.Services
                 throw new InvalidCreditStatusException($"{nameof(currentCredit.Status)} must be only {nameof(CreditStatus.Unactivated)}");
             }
 
-            BankAccount bankAccountReciever = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountRecieverId && ba.BankId == currentCredit.BankId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} is not found");
+            BankAccount bankAccountReciever = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountRecieverId && ba.BankId == currentCredit.BankId && ba.Type == BankAccountType.Current) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} is not found");
             if (!LocalValidator.IsActive(bankAccountReciever))
             {
                 throw new InvalidBankAccountStatusException($"Cannot transfer money on unactive bank account. The value of {nameof(BankAccountStatus)} must be {BankAccountStatus.Active}");
@@ -181,10 +181,14 @@ namespace BusinessLogicLayer.Services
         // ежемесячное списание средств по кредиту 
         public void ExecuteLoanMonthlyPayments()
         {
-            int todayDay = DateTime.Today.Day;
+            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+            int todayDay = today.Day;
+            bool isLastDayOfMonth = today.Day == DateTime.DaysInMonth(today.Year, today.Month);
 
-            List<Credit> activeCredits = _context.Set<Credit>().Include(cr => cr.Client)
-                .Where(cr => cr.Status == CreditStatus.Active && cr.OpenedAt.Day == todayDay)
+            List<Credit> activeCredits = _context.Set<Credit>()
+                .Include(cr => cr.Client)
+                .Where(cr => cr.Status == CreditStatus.Active && 
+                (cr.OpenedAt.Day == todayDay || (isLastDayOfMonth && cr.OpenedAt.Day > todayDay)))
                 .ToList();
 
             foreach (var credit in activeCredits)
@@ -201,14 +205,15 @@ namespace BusinessLogicLayer.Services
                             && ba.Type == BankAccountType.Current 
                             && ba.Status == BankAccountStatus.Active
                             && ba.MoneyBalance >= montlyPayment
-                            && ba.BankId == credit.BankId).ToList();
+                            && ba.BankId == credit.BankId)
+                            .ToList();
 
-                        if (bankAccountsOfClientForWriteOff is null)
+                        if (bankAccountsOfClientForWriteOff.Count == 0)
                         {
                             credit.Status = CreditStatus.Expired;
                             _context.SaveChanges();
                             _transaction.Commit();
-                            return;
+                            continue;
                         }
 
                         BankAccount currentBankAccount = bankAccountsOfClientForWriteOff.First();
@@ -218,10 +223,16 @@ namespace BusinessLogicLayer.Services
 
                         BankAccount? creditBankAccount = _context.Set<BankAccount>().FirstOrDefault(ba => ba.Id == credit.BankAccountId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} which belong to {nameof(Credit)} with {nameof(BankAccount.Id)} = {credit.BankAccountId} is not found");
                         credit.LoanBalance -= montlyPayment;
-                        creditBankAccount.MoneyBalance -= montlyPayment;
-                        if (creditBankAccount.MoneyBalance >= 0 || credit.LoanBalance <= 0)
+                        creditBankAccount.MoneyBalance += montlyPayment;
+
+                        if (creditBankAccount.MoneyBalance >= 0m || credit.LoanBalance <= 0m)
                         {
                             credit.Status = CreditStatus.Closed;
+                            credit.ClosedAt = today;
+
+                            credit.LoanBalance = 0m;
+                            creditBankAccount.MoneyBalance = 0m;
+
                             _bankAccountService.SystemCloseBankAccount(creditBankAccount.Id);
                         }
 
@@ -231,7 +242,6 @@ namespace BusinessLogicLayer.Services
                     catch
                     {
                         _transaction.Rollback();
-                        throw;
                     }
                 }
             }

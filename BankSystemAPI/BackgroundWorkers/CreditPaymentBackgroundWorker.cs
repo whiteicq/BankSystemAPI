@@ -26,10 +26,23 @@ namespace BankSystemAPI.BackgroundWorkers
                 var nextRun = DateTime.Today.AddDays(1).AddMinutes(1);
                 var delay = nextRun - now;
 
+                if (delay <= TimeSpan.Zero)
+                {
+                    delay = TimeSpan.FromSeconds(1);
+                }
+
                 _logger.LogInformation($"Следующее автоматическое списание произойдет через: {delay}");
 
-                // воркер засыпает в отдельном потоке до наступления полуночи
-                await Task.Delay(delay, stoppingToken);
+                try
+                {
+                    await Task.Delay(delay, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    // выход при остановке приложения
+                    _logger.LogInformation("Фоновая задача списания кредитов останавливается...");
+                    break;
+                }
 
                 _logger.LogInformation("Полночь наступила. Запуск процедуры ежедневных списаний по кредитам...");
 

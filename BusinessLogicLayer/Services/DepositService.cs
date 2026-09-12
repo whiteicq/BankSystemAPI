@@ -75,11 +75,14 @@ namespace BusinessLogicLayer.Services
             return deposit;
         }
 
-        private decimal CalculateMonthlyPayment(decimal moneyBalance, decimal interest)
+        private decimal CalculateMonthlyPayment(decimal moneyBalance, decimal interest, int year, int month)
         {
-            decimal sum = moneyBalance * (interest / 12m / 100m);
+            int daysInMonth = DateTime.DaysInMonth(year, month);
+            int daysInYear = DateTime.IsLeapYear(year) ? 366 : 365;
+
+            decimal sum = moneyBalance * (interest / 100m) * daysInMonth * daysInYear;
              
-            return sum;
+            return Math.Round(sum, 2, MidpointRounding.ToEven);
         }
 
         private BankAccount GetMasterBankAccount(Deposit currentDeposit)
@@ -99,7 +102,7 @@ namespace BusinessLogicLayer.Services
             }
 
             Deposit currentDeposit = client.Deposits.FirstOrDefault(cr => cr.Id == depositId) ?? throw new DepositNotFoundException($"Entity of {nameof(Deposit)} with {nameof(Deposit.Id)} = {depositId} is not found");
-            if (!LocalValidator.IsActive(currentDeposit))
+            if (currentDeposit.Status != DepositStatus.Unactivated)
             {
                 throw new InvalidDepositStatusException($"Cannot open a deposit bank account for unactive deposit. The value of {nameof(DepositStatus)} must be { DepositStatus.Active}");
             }
@@ -111,7 +114,9 @@ namespace BusinessLogicLayer.Services
                 Status = BankAccountStatus.Active,
                 Client = client,
                 Deposit = currentDeposit,
-                Bank = currentDeposit.Bank
+                ClientId = clientId,
+                Bank = currentDeposit.Bank,
+                BankId = currentDeposit.BankId
             };
 
             _context.Set<BankAccount>().Add(depositBankAccount);
@@ -136,7 +141,7 @@ namespace BusinessLogicLayer.Services
                 throw new InvalidDepositStatusException($"Cannot transfer money to deposit twice");
             }
 
-            BankAccount bankAccountSender = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountSenderId && ba.BankId == currentDeposit.BankId) ?? throw new BankAccountNotFoundException("");
+            BankAccount bankAccountSender = client.BankAccounts.FirstOrDefault(ba => ba.Id == bankAccountSenderId && ba.BankId == currentDeposit.BankId && ba.Type == BankAccountType.Current) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} with {nameof(BankAccount.Id)} = {bankAccountSenderId} is not found");
             if (!LocalValidator.IsActive(bankAccountSender))
             {
                 throw new InvalidBankAccountStatusException($"Cannot transfer money to a deposit from unactive bank account. The value of {nameof(BankAccountStatus)} must be {BankAccountStatus.Active}");
@@ -146,8 +151,6 @@ namespace BusinessLogicLayer.Services
             {
                 throw new InsufficientFundsException($"Insufficient funds in the bank account. {nameof(bankAccountSender.MoneyBalance)} must be more or equal than {currentDeposit.DepositAmount}");
             }
-
-            BankAccount masterBankAccount = GetMasterBankAccount(currentDeposit);
             
             using (var _transaction = _context.Database.BeginTransaction())
             {
@@ -172,10 +175,16 @@ namespace BusinessLogicLayer.Services
 
         public void ExecuteDepositMonthlyPayments()
         {
-            int todayDay = DateTime.Today.Day;
+            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+            int todayDay = today.Day;
 
-            List<Deposit> activeDeposits = _context.Set<Deposit>().Include(d => d.Client).Include(d => d.BankAccount)
-                .Where(d => d.OpenedAt.Day == todayDay && d.Status == DepositStatus.Active)
+            bool isLastDayOfMonth = today.Day == DateTime.DaysInMonth(today.Year, today.Month);
+
+            List<Deposit> activeDeposits = _context.Set<Deposit>()
+                .Include(d => d.Client)
+                .Include(d => d.BankAccount)
+                .Where(d => d.Status == DepositStatus.Active && 
+                (d.OpenedAt.Day == todayDay || (isLastDayOfMonth && d.OpenedAt.Day > todayDay)))
                 .ToList();
 
             
@@ -185,18 +194,28 @@ namespace BusinessLogicLayer.Services
                 {
                     try
                     {
-                        decimal monthlyAccrual = CalculateMonthlyPayment(deposit.BankAccount!.MoneyBalance, deposit.DepositInterest);
+                        decimal monthlyAccrual = CalculateMonthlyPayment(deposit.BankAccount!.MoneyBalance, deposit.DepositInterest, today.Year, today.Month);
                         BankAccount masterBankAccount = GetMasterBankAccount(deposit);
                         
-                        _transactionService.SystemTransferMoney(monthlyAccrual, masterBankAccount.Id, deposit.BankAccount.Id);
-                        if (DateTime.Today.Year == deposit.OpenedAt.Year)
+                        _transactionService.SystemTransferMoney(monthlyAccrual, masterBankAccount.Id, deposit.BankAccount.Id, TransactionType.Deposit, deposit.Currency);
+
+                        DateOnly expirationDate = deposit.OpenedAt.AddMonths(deposit.DepositTerm);
+
+                        if (today >= expirationDate)
                         {
-                            BankAccount bankAccount = _context.Set<BankAccount>().First(ba => ba.ClientId == deposit.Client.Id && ba.Status == BankAccountStatus.Active && ba.Type == BankAccountType.Current && ba.BankId == deposit.BankId);
+                            BankAccount bankAccount = _context.Set<BankAccount>()
+                                .FirstOrDefault(ba => 
+                                ba.ClientId == deposit.Client.Id &&
+                                ba.Status == BankAccountStatus.Active &&
+                                ba.Type == BankAccountType.Current &&
+                                ba.BankId == deposit.BankId) 
+                                ?? throw new BankAccountNotFoundException("");
                             
                             // если срок вклада закончился, перевод средств клиенту 
-                            _transactionService.SystemTransferMoney(deposit.BankAccount.MoneyBalance, deposit.BankAccount.Id, bankAccount.Id);
+                            _transactionService.SystemTransferMoney(deposit.BankAccount.MoneyBalance, deposit.BankAccount.Id, bankAccount.Id, TransactionType.Deposit);
                             _bankAccountService.SystemCloseBankAccount(deposit.BankAccount.Id);
                             deposit.Status = DepositStatus.Closed;
+                            deposit.ClosedAt = today;
                         }
 
                         _context.SaveChanges();
@@ -205,7 +224,6 @@ namespace BusinessLogicLayer.Services
                     catch
                     {
                         _transaction.Rollback();
-                        throw;
                     }
                 }
             }
