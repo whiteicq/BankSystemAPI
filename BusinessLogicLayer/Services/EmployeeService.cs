@@ -47,13 +47,12 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges();
 
             _loggerService.MakeLog(OperationType.CLIENT_ACTIVATED, nameof(Client), clientId, oldStatus, client.Status.ToString());
-
         }
 
         public void ActivateBankAccount(long bankAccountId)
         {
             BankAccount bankAccount = _context.Set<BankAccount>().Find(bankAccountId) ?? throw new BankAccountNotFoundException($"Entity of {nameof(BankAccount)} with {nameof(BankAccount.Id)} = {bankAccountId} is not found");
-            if (bankAccount.Status != BankAccountStatus.Unactivated || bankAccount.Status != BankAccountStatus.Frozen)
+            if (bankAccount.Status != BankAccountStatus.Unactivated && bankAccount.Status != BankAccountStatus.Frozen)
             {
                 return;
             }
@@ -64,7 +63,6 @@ namespace BusinessLogicLayer.Services
             _context.SaveChanges();
 
             _loggerService.MakeLog(OperationType.BANK_ACCOUNT_ACTIVATED, nameof(BankAccount), bankAccountId, oldStatus, bankAccount.Status.ToString());
-
         }
 
         public void ActivateCredit(long clientId, long creditId, long bankAccountRecieverId)
@@ -107,9 +105,9 @@ namespace BusinessLogicLayer.Services
             string oldStatus = client.Status.ToString();
             client.Status = ClientStatus.Blocked;
 
-            _loggerService.MakeLog(OperationType.CLIENT_BLOCKED, nameof(Client), clientId, oldStatus, client.Status.ToString());
-
             _context.SaveChanges();
+
+            _loggerService.MakeLog(OperationType.CLIENT_BLOCKED, nameof(Client), clientId, oldStatus, client.Status.ToString());
         }
 
         public void CancelTransaction(long transactionId)
@@ -170,7 +168,7 @@ namespace BusinessLogicLayer.Services
         // TODO: мб надо тогда и кредитный счет закрыть?
         public void RejectCredit(long creditId)
         {
-            Credit credit = _context.Set<Credit>().FirstOrDefault(cr => cr.Id == creditId && cr.Status != CreditStatus.Closed && cr.Status != CreditStatus.Rejected) ?? throw new CreditNotFoundException($"Entity of {nameof(Credit)} with {nameof(Credit.Id)} = {creditId} and {nameof(CreditStatus)} = {CreditStatus.Active} is not found");
+            Credit credit = _context.Set<Credit>().FirstOrDefault(cr => cr.Id == creditId && cr.Status != CreditStatus.Closed && cr.Status != CreditStatus.Rejected) ?? throw new CreditNotFoundException($"Entity of {nameof(Credit)} with {nameof(Credit.Id)} = {creditId} is not found");
             credit.Status = CreditStatus.Rejected;
 
             _context.SaveChanges();
@@ -180,7 +178,7 @@ namespace BusinessLogicLayer.Services
 
         public void RejectDeposit(long depositId)
         {
-            Deposit deposit = _context.Set<Deposit>().FirstOrDefault(dp => dp.Id == depositId && dp.Status == DepositStatus.Active) ?? throw new DepositNotFoundException($"Entity of {nameof(Deposit)} with {nameof(Deposit.Id)} = {depositId} and {nameof(DepositStatus)} = {DepositStatus.Active} is not found");
+            Deposit deposit = _context.Set<Deposit>().FirstOrDefault(dp => dp.Id == depositId && dp.Status != DepositStatus.Closed && dp.Status != DepositStatus.Rejected) ?? throw new DepositNotFoundException($"Entity of {nameof(Deposit)} with {nameof(Deposit.Id)} = {depositId} is not found");
             deposit.Status = DepositStatus.Rejected;
 
             _context.SaveChanges();

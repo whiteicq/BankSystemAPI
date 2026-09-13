@@ -80,7 +80,7 @@ namespace BusinessLogicLayer.Services
             int daysInMonth = DateTime.DaysInMonth(year, month);
             int daysInYear = DateTime.IsLeapYear(year) ? 366 : 365;
 
-            decimal sum = moneyBalance * (interest / 100m) * daysInMonth * daysInYear;
+            decimal sum = moneyBalance * (interest / 100m) * daysInMonth / daysInYear;
              
             return Math.Round(sum, 2, MidpointRounding.ToEven);
         }
