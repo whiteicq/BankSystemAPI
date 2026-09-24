@@ -9,6 +9,7 @@ using System.Text;
 using Microsoft.OpenApi;
 using BusinessLogicLayer.Interfaces;
 using BusinessLogicLayer.Services;
+using System.Runtime;
 
 namespace BankSystemAPI
 {
@@ -76,8 +77,6 @@ namespace BankSystemAPI
             });
 
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            //builder.Services.AddOpenApi();
 
             builder.Services.AddHostedService<CreditPaymentBackgroundWorker>();
             builder.Services.AddHostedService<DepositPaymentBackgroundService>();
@@ -105,6 +104,17 @@ namespace BankSystemAPI
                 });
             });
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("BankSecurePolicy", policy =>
+                {
+                    policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
+                        .AllowAnyMethod()
+                        .AllowAnyHeader(); // разрешение для передачи токена в заголовке Autorization 
+                });
+            });
+
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -117,6 +127,8 @@ namespace BankSystemAPI
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors("BankSecurePolicy");
 
             app.UseAuthentication();    
             app.UseAuthorization();
